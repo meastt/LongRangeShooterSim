@@ -1,0 +1,18 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vs/
+.idea/
+
+# Logs and temp
+*.log
+.tmp
+temp/
+tmp/
+
+# Optional: uncomment when you add stacks again
+# [Ll]ibrary/
+# [Tt]emp/
+# godot/.godot/
