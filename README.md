@@ -9,6 +9,10 @@ Cross-platform (iOS + Android) ballistics calculator and hunt-planning app for p
 | [`Initial_Build_Plan.md`](Initial_Build_Plan.md) | Product direction, stack, phased roadmap, costs, AI-agent workflow |
 | [`Claude.md`](Claude.md) | Authoritative conventions for engineers and AI coding agents — read before implementing |
 
+## Cursor
+
+Persistent agent instructions live in [`.cursor/rules/`](.cursor/rules/) (always-on context for this repo). [AGENTS.md](AGENTS.md) is a short index of the same docs.
+
 The Expo app (`app/`), workspace packages (`packages/`), and `landing/` are not scaffolded yet; add them following the build plan.
 
 ## Legacy note

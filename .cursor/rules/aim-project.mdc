@@ -1,0 +1,29 @@
+---
+description: Aim (Expo RN) — stack, V1 constraints, where to read full rules
+alwaysApply: true
+---
+
+# Aim — Cursor agent context
+
+You are working on **Aim**: an Expo (React Native) + TypeScript ballistics and hunt-planning app for long-range **hunters**. Before substantive implementation, align with **[`Claude.md`](../Claude.md)** (authoritative conventions, file layout, Field Mode and liability rules) and **[`Initial_Build_Plan.md`](../Initial_Build_Plan.md)** (product scope and phases).
+
+## Stack (authoritative)
+
+Expo SDK 52+, TypeScript strict, Zustand, TanStack Query, `expo-sqlite` + Drizzle, `@maplibre/maplibre-react-native`, Open-Meteo + `api.weather.gov`, `react-native-ble-plx` (supervisor pattern), `expo-file-system`, IAP per `Claude.md`. EAS for build, update, and submit.
+
+## V1 boundaries
+
+- **Zero backend:** no servers, Firebase, Supabase, or cloud sync.
+- **No Rust** or custom native modules outside Expo config plugins.
+- **No paid third-party APIs** in V1 (per `Claude.md`).
+- TypeScript: **no `any`**, no raw `.js` app code.
+
+## Workflow expectations
+
+- **Spec-first** in `docs/specs/` for ballistics math, BLE, WEZ, wind-risk, and importers.
+- **`packages/solver`:** pure TS only; validation harness gate; do not snapshot-test solver outputs.
+- **Field Mode:** large touch targets (≥56×56 dp), three theme modes, no login/paywall/ads in field flows.
+- **New dependencies:** stop and justify in the PR/task; default is no.
+- Run the relevant tests (or note why not); do not claim success without verification.
+
+When `app/`, `packages/`, or `landing/` are not scaffolded yet, use **`Claude.md`** as the target layout when adding them.

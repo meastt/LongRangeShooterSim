@@ -12,7 +12,29 @@ Thumbs.db
 temp/
 tmp/
 
-# Optional: uncomment when you add stacks again
+# Node / Expo / monorepo (Aim)
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+coverage/
+.next/
+out/
+
+# Env secrets
+.env
+.env.*
+!.env.example
+
+# Native prep (if prebuild adds these later)
+**/ios/Pods/
+**/android/.gradle/
+**/android/app/build/
+
+# Optional: legacy Unity — uncomment if you revive that tree
 # [Ll]ibrary/
 # [Tt]emp/
 # godot/.godot/
