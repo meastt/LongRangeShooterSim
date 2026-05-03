@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: undefined,
+  site: 'https://getrangedope.com',
+  output: 'static',
 });
