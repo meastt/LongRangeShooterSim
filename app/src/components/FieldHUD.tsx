@@ -96,7 +96,7 @@ export function FieldHUD({ result, theme }: Props) {
   const range = fmtInt(row.rangeYards);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+    <View style={styles.container}>
       {/* Profile header */}
       <Text
         style={[styles.profileLine, { color: theme.dim }]}

@@ -50,7 +50,7 @@ export function RangeInput({ theme }: Props) {
   ).current;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: 'rgba(0,0,0,0.6)', borderTopColor: theme.border }]}>
       {/* Scrub display */}
       <View style={styles.scrubArea} {...panResponder.panHandlers}>
         <Text style={[styles.scrubLabel, { color: theme.label }]}>RANGE</Text>
@@ -78,7 +78,7 @@ export function RangeInput({ theme }: Props) {
               style={[
                 styles.presetBtn,
                 {
-                  backgroundColor: active ? theme.primary : theme.surface,
+                  backgroundColor: active ? theme.primary : 'rgba(26,26,26,0.5)',
                   borderColor: active ? theme.primary : theme.border,
                 },
               ]}
