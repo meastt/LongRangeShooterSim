@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Map, Camera } from '@maplibre/maplibre-react-native';
 import { SATELLITE_STYLE } from '../../utils/mapStyles';
@@ -8,6 +8,18 @@ import { SATELLITE_STYLE } from '../../utils/mapStyles';
 const INITIAL_CENTER: [number, number] = [-111.891, 40.7608]; 
 
 export function TacticalMap() {
+  const cameraRef = useRef<Camera>(null);
+
+  useEffect(() => {
+    // Force camera to location on mount
+    cameraRef.current?.setCamera({
+      centerCoordinate: INITIAL_CENTER,
+      zoomLevel: 14,
+      pitch: 45,
+      animationDuration: 0,
+    });
+  }, []);
+
   return (
     <View style={styles.container}>
       <Map
@@ -17,10 +29,11 @@ export function TacticalMap() {
         attributionEnabled={false}
       >
         <Camera
+          ref={cameraRef}
           defaultSettings={{
             centerCoordinate: INITIAL_CENTER,
-            zoomLevel: 15, // High-res tactical zoom
-            pitch: 45, // Angled view for better terrain feel
+            zoomLevel: 14,
+            pitch: 45,
           }}
         />
       </Map>

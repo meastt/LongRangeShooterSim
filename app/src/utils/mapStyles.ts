@@ -9,9 +9,8 @@ export const SATELLITE_STYLE = {
   sources: {
     satellite: {
       type: 'raster',
-      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      tiles: ['https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
       tileSize: 256,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community',
     },
   },
   layers: [
@@ -19,8 +18,6 @@ export const SATELLITE_STYLE = {
       id: 'satellite',
       type: 'raster',
       source: 'satellite',
-      minzoom: 0,
-      maxzoom: 20,
     },
   ],
 };
