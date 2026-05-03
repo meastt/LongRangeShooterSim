@@ -24,16 +24,16 @@ export interface Theme {
 }
 
 const DAY: Theme = {
-  bg: '#0D0D0D',
-  surface: '#1A1A1A',
-  border: '#2A2A2A',
-  primary: '#F5A623',
-  label: '#AAAAAA',
-  dim: '#555555',
-  nav: '#1A1A1A',
-  navBorder: '#2A2A2A',
-  navActive: '#F5A623',
-  navInactive: '#555555',
+  bg: '#000000',
+  surface: '#0A0A0A',
+  border: '#1A1A1A',
+  primary: '#FF0000', // Aggressive tactical red
+  label: '#FFFFFF', // High-contrast white for labels
+  dim: '#444444',
+  nav: '#050505',
+  navBorder: '#151515',
+  navActive: '#FF0000',
+  navInactive: '#333333',
   statusBar: 'light',
 };
 
@@ -41,25 +41,25 @@ const BRIGHT: Theme = {
   bg: '#F5F5F0',
   surface: '#FFFFFF',
   border: '#E0E0D8',
-  primary: '#1A1A1A',
-  label: '#555555',
-  dim: '#AAAAAA',
+  primary: '#CC0000', // Deep red for visibility in bright light
+  label: '#1A1A1A',
+  dim: '#888888',
   nav: '#FFFFFF',
   navBorder: '#E0E0D8',
-  navActive: '#1A1A1A',
+  navActive: '#CC0000',
   navInactive: '#AAAAAA',
   statusBar: 'dark',
 };
 
 const NIGHT_RED: Theme = {
   bg: '#000000',
-  surface: '#0D0000',
-  border: '#1A0000',
-  primary: '#8B0000',
+  surface: '#080000',
+  border: '#150000',
+  primary: '#8B0000', // Low-intensity red for night vision preservation
   label: '#5C0000',
   dim: '#2D0000',
-  nav: '#0D0000',
-  navBorder: '#1A0000',
+  nav: '#050000',
+  navBorder: '#100000',
   navActive: '#8B0000',
   navInactive: '#2D0000',
   statusBar: 'light',
