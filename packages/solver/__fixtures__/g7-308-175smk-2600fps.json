@@ -1,0 +1,33 @@
+{
+  "id": "g7-308-175smk-2600fps",
+  "description": "308 Win 175gr Sierra MatchKing, G7 BC = 0.243 lb/in², MV = 2600 fps, 100 yd zero, 1.5 in scope height, ICAO standard atmosphere (59°F, 29.921 inHg, 0% RH).",
+  "note": "GROUND TRUTH: py-ballisticcalc v2.2.10 (JBM-derived solver) with identical G7 drag table. Values verified by running ground_truth.py locally. Tolerances set tight (1.0\" through 800 yd, 2.0\" to 1000 yd) reflecting same Cd table and formula. The bullet goes transonic (~Mach 1.0) at ~975 yd.",
+  "inputs": {
+    "bullet": {
+      "weightGrains": 175,
+      "diameterInches": 0.308,
+      "bc": 0.243,
+      "dragModel": "G7"
+    },
+    "muzzleVelocityFps": 2600,
+    "scopeHeightInches": 1.5,
+    "zeroRangeYards": 100,
+    "atmosphere": {
+      "temperatureFahrenheit": 59,
+      "pressureInHg": 29.921,
+      "relativeHumidityPct": 0
+    }
+  },
+  "expectedRows": [
+    { "rangeYards": 100,  "pathInches":    0.0,  "toleranceInches": 0.5 },
+    { "rangeYards": 200,  "pathInches":   -4.5,  "toleranceInches": 1.0 },
+    { "rangeYards": 300,  "pathInches":  -15.9,  "toleranceInches": 1.0 },
+    { "rangeYards": 400,  "pathInches":  -35.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 500,  "pathInches":  -64.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 600,  "pathInches": -104.7,  "toleranceInches": 1.0 },
+    { "rangeYards": 700,  "pathInches": -158.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 800,  "pathInches": -228.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 900,  "pathInches": -318.1,  "toleranceInches": 2.0 },
+    { "rangeYards": 1000, "pathInches": -432.0,  "toleranceInches": 2.0 }
+  ]
+}

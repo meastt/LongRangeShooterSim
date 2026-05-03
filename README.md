@@ -13,7 +13,15 @@ Cross-platform (iOS + Android) ballistics calculator and hunt-planning app for p
 
 Persistent agent instructions live in [`.cursor/rules/`](.cursor/rules/) (always-on context for this repo). [AGENTS.md](AGENTS.md) is a short index of the same docs.
 
-The Expo app (`app/`), workspace packages (`packages/`), and `landing/` are not scaffolded yet; add them following the build plan.
+## Repo layout
+
+| Path | Role |
+|------|------|
+| `app/` | Expo SDK 54+ RN app (“Hello Aim”; EAS-ready) |
+| `packages/solver/` | Pure TS ballistics package + Vitest harness (Phase 0 continues with JBM/Berger fixtures) |
+| `landing/` | Astro static site for Cloudflare Pages |
+
+From repo root: `npm run app:start`, `npm run test:solver`, `npm run landing:dev`.
 
 ## Legacy note
 

@@ -1,0 +1,12 @@
+{
+  "id": "vacuum-sanity",
+  "description": "Vacuum approximation — harness wiring only until JBM/Berger fixtures land.",
+  "inputs": {
+    "rangeYards": 300,
+    "muzzleVelocityFps": 3000
+  },
+  "expected": {
+    "dropInches": 17.373986220472442,
+    "toleranceInches": 1e-10
+  }
+}

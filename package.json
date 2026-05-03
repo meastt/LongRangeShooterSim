@@ -1,0 +1,19 @@
+{
+  "name": "aim-monorepo",
+  "private": true,
+  "workspaces": [
+    "app",
+    "packages/*",
+    "landing"
+  ],
+  "scripts": {
+    "test": "npm run test:solver",
+    "test:solver": "npm run test -w @aim/solver",
+    "app:start": "npm run start -w app",
+    "landing:dev": "npm run dev -w landing",
+    "landing:build": "npm run build -w landing"
+  },
+  "overrides": {
+    "react": "19.1.0"
+  }
+}
