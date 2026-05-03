@@ -4,11 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 /** Brand colours — shared across all display modes for nav chrome. */
 const COLORS = {
-  background: '#0D0D0D',
-  surface: '#1A1A1A',
-  border: '#2A2A2A',
-  amber: '#F5A623',
-  muted: '#555555',
+  background: '#000000',
+  surface: '#050505',
+  border: '#151515',
+  red: '#FF0000',
+  muted: '#333333',
 };
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -30,7 +30,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.amber,
+        tabBarActiveTintColor: COLORS.red,
         tabBarInactiveTintColor: COLORS.muted,
         tabBarStyle: {
           backgroundColor: COLORS.surface,
