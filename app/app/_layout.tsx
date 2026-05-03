@@ -7,6 +7,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { db } from '../src/db/client';
 import migrations from '../src/db/migrations/migrations';
+import seed from '../src/db/seed';
+import { getRiflesWithActiveLoad } from '../src/db/queries';
 
 // Keep the splash screen visible until fonts + DB are ready.
 SplashScreen.preventAutoHideAsync();
@@ -22,7 +24,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     migrate(db, migrations)
-      .then(() => setDbSuccess(true))
+      .then(async () => {
+        // If no rifles exist, seed the DB with the Fierce Firearms collection
+        const existing = await getRiflesWithActiveLoad();
+        if (existing.length === 0) {
+          await seed();
+        }
+        setDbSuccess(true);
+      })
       .catch((err) => {
         console.error('[RootLayout] DB init failed:', err);
         setDbError(err);
