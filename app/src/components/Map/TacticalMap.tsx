@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import MapLibreGL from '@maplibre/maplibre-react-native';
+import { Map, Camera } from '@maplibre/maplibre-react-native';
 
 // Standard OSM tiles for v1 (Zero-Ops)
 const OSM_STYLE = {
@@ -28,19 +28,19 @@ const INITIAL_CENTER: [number, number] = [-111.891, 40.7608]; // SLC area placeh
 export function TacticalMap() {
   return (
     <View style={styles.container}>
-      <MapLibreGL.MapView
+      <Map
         style={styles.map}
         styleJSON={JSON.stringify(OSM_STYLE)}
         logoEnabled={false}
         attributionEnabled={true}
       >
-        <MapLibreGL.Camera
+        <Camera
           defaultSettings={{
             centerCoordinate: INITIAL_CENTER,
             zoomLevel: 12,
           }}
         />
-      </MapLibreGL.MapView>
+      </Map>
     </View>
   );
 }
