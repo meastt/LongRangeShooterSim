@@ -9,6 +9,7 @@ import { FieldHUD } from '../../src/components/FieldHUD';
 import { RangeInput } from '../../src/components/RangeInput';
 import { WindInput } from '../../src/components/WindInput';
 import { AtmoInput } from '../../src/components/AtmoInput';
+import { TacticalMap } from '../../src/components/Map/TacticalMap';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useSolverResult } from '../../src/hooks/useSolverResult';
 import { useTheme } from '../../src/theme';
@@ -21,6 +22,11 @@ export default function FieldScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.bg }]}>
       <StatusBar style={theme.statusBar} />
+      
+      <View style={StyleSheet.absoluteFill}>
+        <TacticalMap />
+      </View>
+
       <View style={styles.hud}>
         <FieldHUD result={result} theme={theme} />
       </View>
