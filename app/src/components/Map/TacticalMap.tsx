@@ -16,6 +16,9 @@ export function TacticalMap() {
         styleURL={STYLE_URL}
         logoEnabled={false}
         attributionEnabled={false}
+        compassEnabled={true}
+        compassViewPosition={1} // Top right
+        scaleBarEnabled={true}
       >
         <Camera
           defaultSettings={{
