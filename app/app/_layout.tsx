@@ -9,10 +9,6 @@ import { db } from '../src/db/client';
 import migrations from '../src/db/migrations/migrations';
 import seed from '../src/db/seed';
 import { getRiflesWithActiveLoad } from '../src/db/queries';
-import MapLibreGL from '@maplibre/maplibre-react-native';
-
-// Initialize MapLibre engine
-MapLibreGL.setAccessToken(null);
 
 // Keep the splash screen visible until fonts + DB are ready.
 SplashScreen.preventAutoHideAsync();
