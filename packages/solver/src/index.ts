@@ -1,5 +1,5 @@
 // ─── Trajectory API (Phase 0) ────────────────────────────────────────────────
-export { computeTrajectory } from './trajectory.js';
+export { computeTrajectory } from './trajectory';
 
 export type {
   BulletParams,
@@ -16,14 +16,14 @@ export type {
   Fahrenheit,
   InHg,
   Milliradians,
-} from './types.js';
+} from './types';
 
-export { ICAO_STANDARD_ATMOSPHERE } from './types.js';
+export { ICAO_STANDARD_ATMOSPHERE } from './types';
 
 // ─── Atmosphere and drag internals (exported for testing / truing tools) ──────
-export { computeAirProperties } from './atmosphere.js';
-export type { AirProperties } from './atmosphere.js';
-export { dragCoefficientAtMach, bcToSI } from './drag.js';
+export { computeAirProperties } from './atmosphere';
+export type { AirProperties } from './atmosphere';
+export { dragCoefficientAtMach, bcToSI } from './drag';
 
 // ─── Vacuum helpers (Phase 0 harness wiring; kept for backward compatibility) ─
 export {
@@ -31,4 +31,4 @@ export {
   fpsToMps,
   metersToInches,
   yardsToMeters,
-} from './vacuum.js';
+} from './vacuum';

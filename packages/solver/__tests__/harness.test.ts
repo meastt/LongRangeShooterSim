@@ -158,4 +158,62 @@ describe('solver validation harness', () => {
       expect(true).toBe(true);
     });
   });
+
+  // ── 6.5 Creedmoor 140gr ELD-M (primary seeded rifle) ─────────────────────
+  describe('g7-65creedmoor-140eldm-2710fps trajectory', () => {
+    const fixture = loadTrajectoryFixture('g7-65creedmoor-140eldm-2710fps.json');
+    const inputs = fixtureToInputs(fixture);
+    const output = computeTrajectory(inputs);
+
+    for (const expected of fixture.expectedRows) {
+      it(`path at ${expected.rangeYards} yd is within ${expected.toleranceInches}" of ${expected.pathInches}"`, () => {
+        const row = output.rows.find((r) => (r.rangeYards as number) === expected.rangeYards);
+        expect(row, `no output row at ${expected.rangeYards} yd`).toBeDefined();
+        if (row === undefined) return;
+        const deviation = Math.abs((row.pathInches as number) - expected.pathInches);
+        const rangeYd = expected.rangeYards;
+        const deviationMils = rangeYd > 0 ? deviation / (rangeYd * 0.036) : deviation;
+        expect(
+          deviation,
+          `At ${rangeYd} yd: computed ${(row.pathInches as number).toFixed(1)}", ` +
+            `expected ${expected.pathInches}", deviation ${deviationMils.toFixed(3)} mil`,
+        ).toBeLessThanOrEqual(expected.toleranceInches);
+      });
+    }
+
+    it('reports 1000 yd summary', () => {
+      const row = output.rows.find((r) => (r.rangeYards as number) === 1000);
+      if (row) console.info(`[harness 6.5CM] 1000 yd hold: ${(row.holdMils as number).toFixed(3)} mil, vel: ${(row.velocityFps as number).toFixed(0)} fps`);
+      expect(true).toBe(true);
+    });
+  });
+
+  // ── 7mm PRC 180gr ELD-M (premium long-range seeded rifle) ────────────────
+  describe('g7-7mm-prc-180eldm-2950fps trajectory', () => {
+    const fixture = loadTrajectoryFixture('g7-7mm-prc-180eldm-2950fps.json');
+    const inputs = fixtureToInputs(fixture);
+    const output = computeTrajectory(inputs);
+
+    for (const expected of fixture.expectedRows) {
+      it(`path at ${expected.rangeYards} yd is within ${expected.toleranceInches}" of ${expected.pathInches}"`, () => {
+        const row = output.rows.find((r) => (r.rangeYards as number) === expected.rangeYards);
+        expect(row, `no output row at ${expected.rangeYards} yd`).toBeDefined();
+        if (row === undefined) return;
+        const deviation = Math.abs((row.pathInches as number) - expected.pathInches);
+        const rangeYd = expected.rangeYards;
+        const deviationMils = rangeYd > 0 ? deviation / (rangeYd * 0.036) : deviation;
+        expect(
+          deviation,
+          `At ${rangeYd} yd: computed ${(row.pathInches as number).toFixed(1)}", ` +
+            `expected ${expected.pathInches}", deviation ${deviationMils.toFixed(3)} mil`,
+        ).toBeLessThanOrEqual(expected.toleranceInches);
+      });
+    }
+
+    it('reports 1000 yd summary', () => {
+      const row = output.rows.find((r) => (r.rangeYards as number) === 1000);
+      if (row) console.info(`[harness 7mmPRC] 1000 yd hold: ${(row.holdMils as number).toFixed(3)} mil, vel: ${(row.velocityFps as number).toFixed(0)} fps`);
+      expect(true).toBe(true);
+    });
+  });
 });

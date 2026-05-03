@@ -1,40 +1,88 @@
-# OS
+# ─── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Editors
+# ─── Editors ──────────────────────────────────────────────────────────────────
 .vs/
 .idea/
+*.swp
+*.swo
+.vscode/settings.json
 
-# Logs and temp
+# ─── Logs & temp ──────────────────────────────────────────────────────────────
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .tmp
 temp/
 tmp/
 
-# Node / Expo / monorepo (Aim)
+# ─── Node / pnpm / monorepo ───────────────────────────────────────────────────
 node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ─── Expo / React Native ──────────────────────────────────────────────────────
 .expo/
 .expo-shared/
+expo-env.d.ts
+.metro-health-check*
+web-build/
+
+# ─── Build outputs (gitignored — EAS builds from source) ──────────────────────
 dist/
 build/
+out/
+.next/
 *.tsbuildinfo
 .turbo/
 coverage/
-.next/
-out/
 
-# Env secrets
+# ─── ENV & SECRETS — never commit these ───────────────────────────────────────
 .env
 .env.*
-!.env.example
+!.env.example      # safe to commit — contains only placeholders
 
-# Native prep (if prebuild adds these later)
+# Apple / iOS credentials
+*.p8               # Apple Push Notification key
+*.p12              # Distribution certificate
+*.mobileprovision  # Provisioning profile
+*.certSigningRequest
+
+# Android credentials
+*.keystore
+*.jks
+
+# Firebase — if ever added
+google-services.json
+GoogleService-Info.plist
+
+# ─── Native build artifacts ───────────────────────────────────────────────────
 **/ios/Pods/
+**/ios/build/
 **/android/.gradle/
 **/android/app/build/
+**/android/build/
+*.orig.*
+.kotlin/
+*.aar
 
-# Optional: legacy Unity — uncomment if you revive that tree
+# ─── AI / Tool data ───────────────────────────────────────────────────────────
+.gemini/           # Antigravity app data — local only, not part of codebase
+
+# ─── Optional: legacy game engine folders (uncomment if reviving) ─────────────
 # [Ll]ibrary/
 # [Tt]emp/
 # godot/.godot/
+# [Oo]bj/
+# [Bb]uild/

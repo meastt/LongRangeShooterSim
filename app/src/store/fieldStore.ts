@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AtmosphericConditions } from '@aim/solver';
 
 export type DisplayMode = 'day' | 'bright' | 'night-red';
+export type HoldUnit = 'MIL' | 'MOA';
 
 export interface FieldState {
   /** Selected target range in yards. */
@@ -21,6 +22,8 @@ export interface FieldState {
    */
   atmosphericOverride: AtmosphericConditions | null;
   displayMode: DisplayMode;
+  /** Whether the HUD shows holds in milliradians or MOA (3.43775 MOA per MIL). */
+  holdUnit: HoldUnit;
   /** ID of the rifle whose active load + zero feeds the HUD. */
   activeRifleId: string | null;
 
@@ -30,6 +33,7 @@ export interface FieldState {
   setAtmosphericOverride: (atmo: AtmosphericConditions | null) => void;
   setDisplayMode: (mode: DisplayMode) => void;
   cycleDisplayMode: () => void;
+  toggleHoldUnit: () => void;
   setActiveRifleId: (id: string | null) => void;
 }
 
@@ -43,6 +47,7 @@ export const useFieldStore = create<FieldState>()(
       windClockPosition: 3,
       atmosphericOverride: null,
       displayMode: 'day',
+      holdUnit: 'MIL',
       activeRifleId: null,
 
       setRange: (yards) => set({ rangeYards: Math.max(0, Math.min(1760, yards)) }),
@@ -56,6 +61,8 @@ export const useFieldStore = create<FieldState>()(
         const next = DISPLAY_MODE_CYCLE[(idx + 1) % DISPLAY_MODE_CYCLE.length];
         set({ displayMode: next });
       },
+      toggleHoldUnit: () =>
+        set({ holdUnit: get().holdUnit === 'MIL' ? 'MOA' : 'MIL' }),
       setActiveRifleId: (id) => set({ activeRifleId: id }),
     }),
     {

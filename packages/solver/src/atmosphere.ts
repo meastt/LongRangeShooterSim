@@ -1,4 +1,4 @@
-import type { AtmosphericConditions } from './types.js';
+import type { AtmosphericConditions } from './types';
 
 export type AirProperties = {
   /** kg/m³ */

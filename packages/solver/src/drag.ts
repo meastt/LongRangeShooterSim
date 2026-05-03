@@ -1,4 +1,4 @@
-import type { DragModel } from './types.js';
+import type { DragModel } from './types';
 
 type DragPoint = { readonly mach: number; readonly cd: number };
 

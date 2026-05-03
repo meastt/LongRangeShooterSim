@@ -1,5 +1,5 @@
-import { computeAirProperties } from './atmosphere.js';
-import { bcToSI, dragCoefficientAtMach } from './drag.js';
+import { computeAirProperties } from './atmosphere';
+import { bcToSI, dragCoefficientAtMach } from './drag';
 import type {
   TrajectoryInputs,
   TrajectoryOutput,
@@ -8,7 +8,7 @@ import type {
   Inches,
   FeetPerSecond,
   Milliradians,
-} from './types.js';
+} from './types';
 
 // ─── Physical constants ───────────────────────────────────────────────────────
 

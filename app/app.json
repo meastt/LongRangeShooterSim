@@ -1,29 +1,39 @@
 {
   "expo": {
-    "name": "Aim",
-    "slug": "aim",
-    "version": "1.0.0",
+    "name": "RangeDOPE",
+    "slug": "rangedope",
+    "version": "1.1.0",
     "orientation": "portrait",
-    "icon": "./assets/AIM_icon.jpg",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "scheme": "aim",
+    "scheme": "rangedope",
     "splash": {
-      "image": "./assets/AIM_icon.jpg",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.meastt.aim"
+      "bundleIdentifier": "com.rangedope.ballistics",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "RangeDOPE uses your location to auto-fill shooter position in ShotPlan and fetch local weather for ballistic corrections.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "RangeDOPE uses your location to auto-fill shooter position in ShotPlan and fetch local weather for ballistic corrections.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.rangedope.ballistics",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,7 +42,19 @@
       "expo-router",
       "expo-sqlite",
       "expo-font",
-      "@maplibre/maplibre-react-native"
-    ]
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "RangeDOPE uses your location to auto-fill shooter position and fetch local weather."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "05123605-9036-4b6d-ae82-ba634a1ba524"
+      }
+    }
   }
 }

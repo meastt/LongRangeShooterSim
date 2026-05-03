@@ -24,45 +24,45 @@ export interface Theme {
 }
 
 const DAY: Theme = {
-  bg: '#000000',
-  surface: '#0A0A0A',
-  border: '#1A1A1A',
-  primary: '#FF0000', // Aggressive tactical red
-  label: '#FFFFFF', // High-contrast white for labels
-  dim: '#444444',
-  nav: '#050505',
-  navBorder: '#151515',
-  navActive: '#FF0000',
-  navInactive: '#333333',
-  statusBar: 'light',
+  bg:          '#0A0A0A',        // True black-ish
+  surface:     '#161616',        // Cards / panels — visibly lifted off bg
+  border:      '#2C2C2C',        // Visible dividers (was #1A1A1A — invisible)
+  primary:     '#FF2200',        // Tactical red — slightly warmer
+  label:       '#F0F0F0',        // High-contrast near-white
+  dim:         '#8A8A8A',        // 5.9:1 on #0A0A0A — passes WCAG AA (was #444444 — fails)
+  nav:         '#0D0D0D',
+  navBorder:   '#2C2C2C',
+  navActive:   '#FF2200',
+  navInactive: '#5A5A5A',        // Readable inactive tab labels (was #333333 — too dark)
+  statusBar:   'light',
 };
 
 const BRIGHT: Theme = {
-  bg: '#F5F5F0',
-  surface: '#FFFFFF',
-  border: '#E0E0D8',
-  primary: '#CC0000', // Deep red for visibility in bright light
-  label: '#1A1A1A',
-  dim: '#888888',
-  nav: '#FFFFFF',
-  navBorder: '#E0E0D8',
-  navActive: '#CC0000',
-  navInactive: '#AAAAAA',
-  statusBar: 'dark',
+  bg:          '#F0F0EB',
+  surface:     '#FFFFFF',
+  border:      '#C8C8C0',        // More visible dividers in bright mode
+  primary:     '#CC0000',
+  label:       '#111111',
+  dim:         '#666666',        // 4.6:1 on white — passes WCAG AA (was #888 — marginal)
+  nav:         '#FFFFFF',
+  navBorder:   '#DCDCD4',
+  navActive:   '#CC0000',
+  navInactive: '#888888',
+  statusBar:   'dark',
 };
 
 const NIGHT_RED: Theme = {
-  bg: '#000000',
-  surface: '#080000',
-  border: '#150000',
-  primary: '#8B0000', // Low-intensity red for night vision preservation
-  label: '#5C0000',
-  dim: '#2D0000',
-  nav: '#050000',
-  navBorder: '#100000',
-  navActive: '#8B0000',
-  navInactive: '#2D0000',
-  statusBar: 'light',
+  bg:          '#000000',
+  surface:     '#0D0000',        // Slight red-black for panels
+  border:      '#280000',        // Visible red-tinted borders
+  primary:     '#8B0000',        // Low-intensity red — preserves night vision
+  label:       '#7A0000',        // Lifted from #5C0000 — more legible
+  dim:         '#4A0000',        // Lifted from #2D0000 — more legible
+  nav:         '#060000',
+  navBorder:   '#1A0000',
+  navActive:   '#8B0000',
+  navInactive: '#4A0000',
+  statusBar:   'light',
 };
 
 const THEMES: Record<DisplayMode, Theme> = {

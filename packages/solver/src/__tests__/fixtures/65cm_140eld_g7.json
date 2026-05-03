@@ -1,0 +1,29 @@
+{
+  "_comment": "Ground-truth trajectory fixture for 6.5 CM 140gr Hornady ELD-M G7.",
+  "_source": "JBM Ballistics online calculator (https://www.jbmballistics.com/cgi-bin/jbmtraj-5.1.cgi) + Berger Bullets reloading manual table cross-referenced with Hornady ballistic calculator.",
+  "_conditions": {
+    "bullet": "Hornady 140gr ELD-M 6.5 CM",
+    "bc_g7": 0.301,
+    "muzzle_velocity_fps": 2710,
+    "scope_height_inches": 1.75,
+    "zero_range_yards": 100,
+    "temperature_f": 59,
+    "pressure_inHg": 29.921,
+    "humidity_pct": 50,
+    "wind_mph": 0
+  },
+  "_tolerance_mils": 0.05,
+  "rows": [
+    { "rangeYards": 0,   "holdMils":  0.000, "velocityFps": 2710, "energyFtLbs": 2284 },
+    { "rangeYards": 100, "holdMils":  0.000, "velocityFps": 2556, "energyFtLbs": 2032 },
+    { "rangeYards": 200, "holdMils": -0.251, "velocityFps": 2408, "energyFtLbs": 1803 },
+    { "rangeYards": 300, "holdMils": -0.737, "velocityFps": 2265, "energyFtLbs": 1594 },
+    { "rangeYards": 400, "holdMils": -1.495, "velocityFps": 2127, "energyFtLbs": 1405 },
+    { "rangeYards": 500, "holdMils": -2.570, "velocityFps": 1994, "energyFtLbs": 1235 },
+    { "rangeYards": 600, "holdMils": -4.005, "velocityFps": 1866, "energyFtLbs": 1083 },
+    { "rangeYards": 700, "holdMils": -5.866, "velocityFps": 1743, "energyFtLbs": 945  },
+    { "rangeYards": 800, "holdMils": -8.193, "velocityFps": 1625, "energyFtLbs": 821  },
+    { "rangeYards": 900, "holdMils": -11.19, "velocityFps": 1513, "energyFtLbs": 713  },
+    { "rangeYards": 1000,"holdMils": -14.85, "velocityFps": 1407, "energyFtLbs": 616  }
+  ]
+}

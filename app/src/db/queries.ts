@@ -2,7 +2,7 @@
  * Typed query helpers for the Aim database.
  * All DB calls go through here — no raw drizzle calls in components.
  */
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { db } from './client';
 import { rifles, loads, scopes, zeros, coldBoreEvents } from './schema';
 import type {
@@ -170,4 +170,35 @@ export async function upsertZero(
 export async function deleteRifle(rifleId: string): Promise<void> {
   // Cascade deletes loads, scopes, zeros via FK constraints.
   await db.delete(rifles).where(eq(rifles.id, rifleId));
+}
+
+/** Toggles the suppressor flag on a rifle and bumps updatedAt. */
+export async function updateSuppressor(
+  rifleId: string,
+  enabled: boolean,
+): Promise<void> {
+  await db
+    .update(rifles)
+    .set({ suppressorEnabled: enabled, updatedAt: now() })
+    .where(eq(rifles.id, rifleId));
+}
+
+// ─── Cold-bore events ─────────────────────────────────────────────────────────
+
+/** Returns all cold-bore events for a rifle, newest first. */
+export async function getColdBoreEvents(
+  rifleId: string,
+): Promise<ColdBoreEventRow[]> {
+  return db
+    .select()
+    .from(coldBoreEvents)
+    .where(eq(coldBoreEvents.rifleId, rifleId))
+    .orderBy(desc(coldBoreEvents.date));
+}
+
+/** Inserts a new cold-bore event. Caller is responsible for generating `id`. */
+export async function insertColdBoreEvent(
+  data: Omit<ColdBoreEventRow, 'createdAt'>,
+): Promise<void> {
+  await db.insert(coldBoreEvents).values({ ...data, createdAt: now() });
 }

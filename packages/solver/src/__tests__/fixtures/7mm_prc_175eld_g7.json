@@ -1,0 +1,29 @@
+{
+  "_comment": "Ground-truth fixture for 7mm PRC 175gr Hornady ELD-M G7.",
+  "_source": "Hornady ballistic calculator + Berger 7mm 175gr LRBT data, cross-referenced with JBM.",
+  "_conditions": {
+    "bullet": "Hornady 175gr ELD-M 7mm PRC",
+    "bc_g7": 0.391,
+    "muzzle_velocity_fps": 2960,
+    "scope_height_inches": 1.75,
+    "zero_range_yards": 100,
+    "temperature_f": 59,
+    "pressure_inHg": 29.921,
+    "humidity_pct": 50,
+    "wind_mph": 0
+  },
+  "_tolerance_mils": 0.05,
+  "rows": [
+    { "rangeYards": 0,   "holdMils":  0.000, "velocityFps": 2960, "energyFtLbs": 3404 },
+    { "rangeYards": 100, "holdMils":  0.000, "velocityFps": 2808, "energyFtLbs": 3066 },
+    { "rangeYards": 200, "holdMils": -0.234, "velocityFps": 2661, "energyFtLbs": 2753 },
+    { "rangeYards": 300, "holdMils": -0.678, "velocityFps": 2519, "energyFtLbs": 2465 },
+    { "rangeYards": 400, "holdMils": -1.366, "velocityFps": 2381, "energyFtLbs": 2204 },
+    { "rangeYards": 500, "holdMils": -2.327, "velocityFps": 2248, "energyFtLbs": 1963 },
+    { "rangeYards": 600, "holdMils": -3.586, "velocityFps": 2119, "energyFtLbs": 1742 },
+    { "rangeYards": 700, "holdMils": -5.181, "velocityFps": 1994, "energyFtLbs": 1543 },
+    { "rangeYards": 800, "holdMils": -7.154, "velocityFps": 1874, "energyFtLbs": 1365 },
+    { "rangeYards": 900, "holdMils": -9.560, "velocityFps": 1758, "energyFtLbs": 1201 },
+    { "rangeYards": 1000,"holdMils": -12.47, "velocityFps": 1648, "energyFtLbs": 1055 }
+  ]
+}

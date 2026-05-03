@@ -1,0 +1,33 @@
+{
+  "id": "g7-7mm-prc-180eldm-2950fps",
+  "description": "7mm PRC 180gr Hornady ELD-M, G7 BC = 0.402 lb/in², MV = 2950 fps, 100 yd zero, 1.8 in scope height, ICAO standard atmosphere.",
+  "note": "Ground truth derived from @aim/solver dist build. Regression baseline — the 7mm PRC stays supersonic past 1000 yd (235 fps above Mach 1 at this altitude), so solver accuracy should be high in this range.",
+  "inputs": {
+    "bullet": {
+      "weightGrains": 180,
+      "diameterInches": 0.284,
+      "bc": 0.402,
+      "dragModel": "G7"
+    },
+    "muzzleVelocityFps": 2950,
+    "scopeHeightInches": 1.8,
+    "zeroRangeYards": 100,
+    "atmosphere": {
+      "temperatureFahrenheit": 59,
+      "pressureInHg": 29.921,
+      "relativeHumidityPct": 0
+    }
+  },
+  "expectedRows": [
+    { "rangeYards": 100,  "pathInches":    0.0,  "toleranceInches": 0.5 },
+    { "rangeYards": 200,  "pathInches":   -2.5,  "toleranceInches": 1.0 },
+    { "rangeYards": 300,  "pathInches":   -9.8,  "toleranceInches": 1.0 },
+    { "rangeYards": 400,  "pathInches":  -22.2,  "toleranceInches": 1.0 },
+    { "rangeYards": 500,  "pathInches":  -40.2,  "toleranceInches": 1.0 },
+    { "rangeYards": 600,  "pathInches":  -64.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 700,  "pathInches":  -95.3,  "toleranceInches": 1.0 },
+    { "rangeYards": 800,  "pathInches": -133.6,  "toleranceInches": 1.5 },
+    { "rangeYards": 900,  "pathInches": -180.0,  "toleranceInches": 2.0 },
+    { "rangeYards": 1000, "pathInches": -235.3,  "toleranceInches": 2.5 }
+  ]
+}

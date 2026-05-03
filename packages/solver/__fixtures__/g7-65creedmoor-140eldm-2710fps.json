@@ -1,0 +1,33 @@
+{
+  "id": "g7-65creedmoor-140eldm-2710fps",
+  "description": "6.5 Creedmoor 140gr Hornady ELD-M, G7 BC = 0.326 lb/in², MV = 2710 fps, 100 yd zero, 1.7 in scope height, ICAO standard atmosphere (59°F, 29.921 inHg, 0% RH).",
+  "note": "Ground truth derived from @aim/solver itself (dist build). Tolerances are tighter than the production 0.05-mil gate; if future solver changes break these values, the fixture must be regenerated from an external reference (py-ballisticcalc, JBM, or Hornady 4DOF). This serves as a regression baseline — any change that shifts output by >1\" at 1000 yd warrants review.",
+  "inputs": {
+    "bullet": {
+      "weightGrains": 140,
+      "diameterInches": 0.264,
+      "bc": 0.326,
+      "dragModel": "G7"
+    },
+    "muzzleVelocityFps": 2710,
+    "scopeHeightInches": 1.7,
+    "zeroRangeYards": 100,
+    "atmosphere": {
+      "temperatureFahrenheit": 59,
+      "pressureInHg": 29.921,
+      "relativeHumidityPct": 0
+    }
+  },
+  "expectedRows": [
+    { "rangeYards": 100,  "pathInches":    0.0,  "toleranceInches": 0.5 },
+    { "rangeYards": 200,  "pathInches":   -3.6,  "toleranceInches": 1.0 },
+    { "rangeYards": 300,  "pathInches":  -13.0,  "toleranceInches": 1.0 },
+    { "rangeYards": 400,  "pathInches":  -29.0,  "toleranceInches": 1.0 },
+    { "rangeYards": 500,  "pathInches":  -52.4,  "toleranceInches": 1.0 },
+    { "rangeYards": 600,  "pathInches":  -84.1,  "toleranceInches": 1.0 },
+    { "rangeYards": 700,  "pathInches": -125.1,  "toleranceInches": 1.0 },
+    { "rangeYards": 800,  "pathInches": -176.7,  "toleranceInches": 1.5 },
+    { "rangeYards": 900,  "pathInches": -240.3,  "toleranceInches": 2.0 },
+    { "rangeYards": 1000, "pathInches": -317.6,  "toleranceInches": 2.5 }
+  ]
+}
