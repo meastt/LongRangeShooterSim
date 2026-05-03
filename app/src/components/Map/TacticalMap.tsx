@@ -1,43 +1,26 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Map, Camera } from '@maplibre/maplibre-react-native';
+import { SATELLITE_STYLE } from '../../utils/mapStyles';
 
-// Standard OSM tiles for v1 (Zero-Ops)
-const OSM_STYLE = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '&copy; OpenStreetMap contributors',
-    },
-  },
-  layers: [
-    {
-      id: 'osm',
-      type: 'raster',
-      source: 'osm',
-    },
-  ],
-};
-
-// Initial camera position (somewhere tactical — e.g., near a famous range or zeroed on user)
-const INITIAL_CENTER: [number, number] = [-111.891, 40.7608]; // SLC area placeholder
+// Initial camera position — zooming into a tactical range area
+// Placeholder: Salt Lake City (UT) — 40.7608° N, 111.8910° W
+const INITIAL_CENTER: [number, number] = [-111.891, 40.7608]; 
 
 export function TacticalMap() {
   return (
     <View style={styles.container}>
       <Map
         style={styles.map}
-        styleJSON={JSON.stringify(OSM_STYLE)}
+        styleJSON={JSON.stringify(SATELLITE_STYLE)}
         logoEnabled={false}
-        attributionEnabled={true}
+        attributionEnabled={false}
       >
         <Camera
           defaultSettings={{
             centerCoordinate: INITIAL_CENTER,
-            zoomLevel: 12,
+            zoomLevel: 15, // High-res tactical zoom
+            pitch: 45, // Angled view for better terrain feel
           }}
         />
       </Map>
