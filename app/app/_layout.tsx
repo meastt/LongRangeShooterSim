@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -12,6 +13,48 @@ import { getRiflesWithActiveLoad } from '../src/db/queries';
 
 // Keep the splash screen visible until fonts + DB are ready.
 SplashScreen.preventAutoHideAsync();
+
+// ─── RevenueCat initialisation ────────────────────────────────────────────────
+// Called once at app startup. RC docs specify configure() must be called before
+// any other Purchases method. We call it here, before any screen mounts.
+// Using a lazy require so the app doesn't crash in Expo Go (no native module).
+
+const RC_APPLE_KEY  = process.env['EXPO_PUBLIC_RC_APPLE_KEY']  ?? '';
+const RC_GOOGLE_KEY = process.env['EXPO_PUBLIC_RC_GOOGLE_KEY'] ?? '';
+
+function initRevenueCat() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const RC = require('react-native-purchases') as Record<string, unknown>;
+    const Purchases = (RC.default ?? RC) as {
+      configure: (opts: { apiKey: string }) => void;
+      isConfigured: boolean;
+    };
+
+    // Guard against double-configure on HMR reloads in dev
+    if (Purchases.isConfigured) {
+      console.log('[RangeDOPE] RevenueCat already configured — skipping.');
+      return;
+    }
+
+    const apiKey = Platform.OS === 'ios' ? RC_APPLE_KEY : RC_GOOGLE_KEY;
+    if (!apiKey) {
+      console.warn('[RangeDOPE] RevenueCat API key not set — paywall disabled.');
+      return;
+    }
+
+    Purchases.configure({ apiKey });
+    console.log('[RangeDOPE] RevenueCat configured.');
+  } catch {
+    // Expo Go or simulator without native build — degrade gracefully.
+    console.log('[RangeDOPE] RevenueCat native module not available (Expo Go).');
+  }
+}
+
+// Initialise immediately at module load — before any component mounts.
+initRevenueCat();
+
+// ─── Root layout ──────────────────────────────────────────────────────────────
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

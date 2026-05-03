@@ -65,6 +65,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="shotplan"
+        options={{
+          title: 'PLAN',
+          tabBarIcon: ({ color, size }) => (
+            <TabIcon name="map-outline" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'SETTINGS',
