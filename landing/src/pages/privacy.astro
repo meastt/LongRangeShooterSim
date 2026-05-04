@@ -1,222 +1,143 @@
 ---
 import Base from '../layouts/Base.astro';
-const updated = 'May 3, 2026';
 ---
-<Base
-  title="Privacy Policy — RangeDOPE"
-  description="RangeDOPE privacy policy. We collect minimal data and never sell it."
->
-
+<Base title="Privacy Policy | RangeDOPE" description="RangeDOPE privacy policy — your data never leaves your device.">
 <style>
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px clamp(20px, 5vw, 60px);
-    background: rgba(8,8,8,0.9);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav-brand { display: flex; align-items: center; gap: 10px; opacity: 1; }
-  .nav-logo { width: 28px; height: 28px; border-radius: 7px; }
-  .nav-name {
-    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
-    letter-spacing: 2px; color: var(--label);
-  }
-  .nav-name span { color: var(--primary); }
-  .back-link {
-    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px;
-    color: var(--dim); text-transform: uppercase;
-  }
-  .back-link:hover { color: var(--primary); opacity: 1; }
-
-  .page {
-    max-width: 720px; margin: 0 auto;
-    padding: 120px clamp(20px, 5vw, 40px) 80px;
-  }
-
-  /* Header */
-  .page-header { margin-bottom: 56px; }
-  .page-label {
-    font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px;
-    color: var(--primary); text-transform: uppercase; margin-bottom: 16px;
-    display: block;
-  }
-  h1 {
-    font-size: clamp(32px, 5vw, 52px); font-weight: 700;
-    letter-spacing: -1.5px; color: var(--white); margin-bottom: 16px;
-  }
-  .meta {
-    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
-    color: var(--dim);
-  }
-
-  /* Sections */
-  section { margin-bottom: 48px; }
-  h2 {
-    font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--primary);
-    margin-bottom: 16px; padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-  p { font-size: 15px; color: #b0b0b0; line-height: 1.85; margin-bottom: 14px; }
-  ul { padding-left: 20px; margin-bottom: 14px; }
-  li { font-size: 15px; color: #b0b0b0; line-height: 1.85; margin-bottom: 6px; }
-  strong { color: var(--label); font-weight: 600; }
-  a { color: var(--primary); }
-  a:hover { opacity: 0.8; }
-
-  .tag {
-    display: inline-block;
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px;
-    color: var(--primary); background: var(--primary-g);
-    border: 1px solid rgba(255,48,0,0.2); border-radius: 4px;
-    padding: 3px 8px; margin: 0 4px 4px 0;
-  }
-
-  .contact-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 24px 28px; margin-top: 12px;
-  }
-  .contact-card p { margin: 0; font-family: var(--font-mono); font-size: 13px; }
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 32px clamp(20px, 5vw, 60px);
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
-    gap: 16px;
-  }
-  .footer-copy { font-family: var(--font-mono); font-size: 10px; color: var(--dim2); }
-  .footer-home { font-family: var(--font-mono); font-size: 10px; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
-  .footer-home:hover { color: var(--primary); opacity: 1; }
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,60px);height:80px;background:rgba(8,8,8,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+  .brand{font-family:var(--font-sans);font-size:20px;font-weight:900;letter-spacing:.15em;color:#fff;font-style:italic;}
+  .brand span{color:var(--primary);}
+  main{max-width:720px;margin:0 auto;padding:140px clamp(20px,5vw,40px) 100px;}
+  .back{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:48px;}
+  .back:hover{color:var(--primary);opacity:1;}
+  .spec-tag{display:inline-block;background:var(--primary);color:#fff;font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;padding:4px 10px;margin-bottom:20px;}
+  h1{font-family:var(--font-sans);font-size:clamp(36px,6vw,56px);font-weight:700;letter-spacing:-.02em;color:#fff;text-transform:uppercase;margin-bottom:28px;}
+  .meta{display:flex;gap:40px;font-family:var(--font-mono);font-size:11px;margin-bottom:0;padding-bottom:40px;border-bottom:1px solid var(--border);}
+  .meta-item{display:flex;flex-direction:column;gap:4px;}
+  .meta-key{color:rgba(255,255,255,.25);letter-spacing:.1em;text-transform:uppercase;font-size:9px;}
+  .meta-val{color:var(--primary);font-weight:700;letter-spacing:.05em;}
+  section{margin-top:48px;}
+  h2{font-family:var(--font-sans);font-size:clamp(20px,3vw,28px);font-weight:600;letter-spacing:-.01em;color:#fff;text-transform:uppercase;border-left:4px solid var(--primary);padding-left:16px;margin-bottom:16px;}
+  p{font-size:16px;color:#888;line-height:1.85;margin-bottom:16px;}
+  .tech-tag{display:inline-block;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:2px 7px;border:1px solid rgba(255,48,0,.4);background:rgba(255,48,0,.08);color:var(--primary);vertical-align:middle;margin:0 3px;}
+  ul.data-list{list-style:none;border:1px solid var(--border);background:rgba(18,18,18,.5);padding:24px 28px;margin:16px 0;}
+  ul.data-list li{display:flex;align-items:flex-start;gap:12px;font-size:14px;color:#aaa;margin-bottom:14px;line-height:1.6;}
+  ul.data-list li:last-child{margin-bottom:0;}
+  ul.data-list li::before{content:'◆';color:var(--primary);font-size:9px;flex-shrink:0;margin-top:4px;}
+  .notice-box{border-left:4px solid var(--primary);background:var(--surface);padding:24px 28px;margin:20px 0;position:relative;overflow:hidden;}
+  .notice-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:#fff;text-transform:uppercase;margin-bottom:8px;}
+  .notice-box p{font-size:13px;font-family:var(--font-mono);color:#888;margin-bottom:0;}
+  .partners{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+  .partner{border:1px solid var(--border);padding:20px;}
+  .partner-cat{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--primary);text-transform:uppercase;margin-bottom:6px;}
+  .partner-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;}
+  .partner p{font-size:12px;color:var(--dim);margin-bottom:0;}
+  .contact-box{margin-top:80px;padding-top:40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;background:var(--surface);padding:32px;border:1px solid var(--border);}
+  .contact-box h3{font-family:var(--font-sans);font-size:22px;font-weight:700;color:#fff;letter-spacing:-.01em;margin-bottom:6px;}
+  .contact-box p{margin-bottom:0;}
+  .btn-contact{display:inline-block;background:#fff;color:#000;font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;padding:14px 32px;font-weight:700;text-transform:uppercase;}
+  .btn-contact:hover{background:var(--primary);color:#fff;opacity:1;}
+  footer{border-top:1px solid var(--border);padding:32px clamp(20px,5vw,60px);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  footer a{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;}
+  footer a:hover{color:var(--primary);opacity:1;}
+  footer span{font-family:var(--font-mono);font-size:9px;color:var(--dim2);letter-spacing:.1em;text-transform:uppercase;}
+  @media(max-width:600px){.partners{grid-template-columns:1fr;}.meta{flex-wrap:wrap;gap:24px;}}
 </style>
 
-<!-- Nav -->
 <nav>
-  <a href="/" class="nav-brand">
-    <img src="/logo.png" alt="RangeDOPE" class="nav-logo" />
-    <span class="nav-name">Range<span>DOPE</span></span>
-  </a>
-  <a href="/" class="back-link">← Back to Home</a>
+  <a href="/" style="opacity:1;text-decoration:none;"><span class="brand">RANGE<span>DOPE</span></span></a>
 </nav>
 
-<main class="page">
-  <header class="page-header">
-    <span class="page-label">Legal</span>
-    <h1>Privacy Policy</h1>
-    <p class="meta">Effective: {updated} &nbsp;·&nbsp; Last updated: {updated}</p>
-  </header>
+<main>
+  <a href="/" class="back">← Back to Home</a>
+
+  <div class="spec-tag">Legal Specification</div>
+  <h1>Privacy Policy</h1>
+
+  <div class="meta">
+    <div class="meta-item"><span class="meta-key">Effective Date</span><span class="meta-val">2026.01.12</span></div>
+    <div class="meta-item"><span class="meta-key">Last Updated</span><span class="meta-val">2026.05.03</span></div>
+    <div class="meta-item"><span class="meta-key">System Version</span><span class="meta-val" style="color:#fff;">v1.1.0-BETA</span></div>
+  </div>
 
   <section>
-    <h2>Overview</h2>
-    <p>
-      RangeDOPE ("the App") is a long-range ballistic solver and hunt planning tool for iOS.
-      This policy describes what information we collect, why we collect it, and how it is used.
-    </p>
-    <p>
-      <strong>The short version:</strong> we collect as little as possible, we don't sell your data,
-      and your hunting spots stay on your phone.
-    </p>
+    <h2>01. Overview</h2>
+    <p>At RangeDOPE, we prioritize operational security. This Privacy Policy describes how your information is handled when you use the RangeDOPE Precision Ballistics System. We operate under a <span class="tech-tag">ZERO-RETENTION</span> default — your data stays on your device.</p>
   </section>
 
   <section>
-    <h2>Information We Collect</h2>
-
-    <p><strong>Location Data <span class="tag">WHEN IN USE ONLY</span></strong></p>
-    <p>
-      The App requests access to your device location for two purposes only:
-    </p>
-    <ul>
-      <li>Auto-filling shooter position (latitude, longitude, elevation) in the Shot Plan screen</li>
-      <li>Fetching local atmospheric data (temperature, pressure, humidity) for ballistic corrections</li>
-    </ul>
-    <p>
-      <strong>Your location is processed on-device and is never transmitted to our servers or shared
-      with any third party.</strong> We do not collect or store location history. Location access
-      is optional — all coordinates can be entered manually.
-    </p>
-
-    <p><strong>Hunt Waypoints & Shot Plans</strong></p>
-    <p>
-      Waypoints, sightings, stands, glassing points, and shot plan data you create are stored
-      locally on your device using iOS's built-in secure storage. This data is never uploaded
-      to any server and is never accessible to us.
-    </p>
-
-    <p><strong>Purchases & Subscriptions <span class="tag">REVENUECAT</span></strong></p>
-    <p>
-      In-app purchases are processed by Apple through the App Store. We use
-      <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat</a>
-      to manage subscription entitlements. RevenueCat may collect a pseudonymous device identifier
-      for entitlement verification. No payment information is processed by us directly.
-      See <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat's Privacy Policy</a>
-      and <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's Privacy Policy</a>.
-    </p>
-
-    <p><strong>Map Tiles</strong></p>
-    <p>
-      Map tiles are loaded from third-party services including USGS National Map, ESRI World
-      Imagery, and the BLM Surface Management Agency. These are standard tile requests that
-      include your map viewport bounding box — consistent with any mapping application. We do
-      not control or store this data.
-    </p>
-  </section>
-
-  <section>
-    <h2>What We Do NOT Collect</h2>
-    <ul>
-      <li>Your name, email address, or any account information</li>
-      <li>Background location or location history</li>
-      <li>Device contacts, photos, or camera</li>
-      <li>Advertising identifiers (no ad SDKs)</li>
-      <li>Crash analytics or usage telemetry (no Firebase, Amplitude, Mixpanel, etc.)</li>
-      <li>Your rifle profiles, load data, or DOPE cards</li>
+    <h2>02. Information We Collect</h2>
+    <p>To provide precision ballistic calculations, the application accesses specific device capabilities. This includes GPS coordinates <span class="tech-tag">WHEN IN USE ONLY</span>, local atmospheric sensors, and device orientation. Nothing is transmitted to our servers.</p>
+    <ul class="data-list">
+      <li><strong>Atmospheric Data:</strong> Barometric pressure, humidity, and temperature — used locally for ballistic solutions only.</li>
+      <li><strong>GPS / Location:</strong> Used to fill Shooter coordinates in Shot Plan mode. Only accessed when you tap GPS. Never stored remotely.</li>
+      <li><strong>Ballistic Profiles:</strong> Rifle, load, and scope configurations stored locally on your device in SQLite.</li>
+      <li><strong>Subscription Status:</strong> Managed via <span class="tech-tag">REVENUECAT</span> to verify active Pro license. RevenueCat receives a hashed device ID and transaction receipts only.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Data Retention & Deletion</h2>
-    <p>
-      All app data — rifle profiles, shot plans, waypoints, DOPE cards — is stored locally
-      on your device. <strong>Deleting the App removes all locally stored data permanently.</strong>
-    </p>
-    <p>
-      RevenueCat retains purchase records to restore entitlements. Contact
-      <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat</a>
-      directly for deletion requests related to their records.
-    </p>
+    <h2>03. Data Security</h2>
+    <p>All ballistic profiles and hunt data are stored locally. We do not transmit your location, firing positions, or hunt logs to any server. Your data is never sold, shared, or monetized.</p>
+    <div class="notice-box">
+      <div class="notice-label">Critical Notice</div>
+      <p>Deleting the application results in permanent removal of all locally stored ballistic profiles and waypoints. Use the Export feature before uninstalling to preserve your data.</p>
+    </div>
   </section>
 
   <section>
-    <h2>Children</h2>
-    <p>
-      RangeDOPE is not directed at children under 17. We do not knowingly collect any
-      information from minors. The App is rated 17+ on the App Store.
-    </p>
+    <h2>04. Third-Party Integrations</h2>
+    <p>We use a minimal set of technical partners to ensure system stability and payment processing.</p>
+    <div class="partners">
+      <div class="partner">
+        <div class="partner-cat">Crash Reporting</div>
+        <div class="partner-name">Sentry</div>
+        <p>Anonymous crash and error reporting. No user-identifiable data. Helps us fix bugs fast.</p>
+      </div>
+      <div class="partner">
+        <div class="partner-cat">Billing</div>
+        <div class="partner-name">RevenueCat + App Store</div>
+        <p>In-app purchase verification via Apple StoreKit. We never see your payment details.</p>
+      </div>
+      <div class="partner">
+        <div class="partner-cat">Weather</div>
+        <div class="partner-name">Open-Meteo</div>
+        <p>Free, anonymous weather API. Your location is sent only to fetch wind data; it is not stored.</p>
+      </div>
+      <div class="partner">
+        <div class="partner-cat">Mapping</div>
+        <div class="partner-name">USGS / ESRI / BLM</div>
+        <p>Free government tile servers. Tile requests are standard HTTP — no user tracking.</p>
+      </div>
+    </div>
   </section>
 
   <section>
-    <h2>Changes to This Policy</h2>
-    <p>
-      If we make material changes we will update the "Last Updated" date above. Continued use
-      of the App after changes constitutes acceptance of the updated policy.
-    </p>
+    <h2>05. Your Rights</h2>
+    <p>Because we collect no personal data on our servers, there is nothing to request deletion of. All your data lives on your iPhone. Delete the app to remove everything. You can also export your profiles at any time from the Settings tab.</p>
   </section>
 
   <section>
-    <h2>Contact</h2>
-    <p>Questions or concerns about your privacy? We're a one-person shop — reach out directly:</p>
-    <div class="contact-card">
-      <p>
-        RangeDOPE Support<br />
-        <a href="mailto:mike@techridgeseo.com">mike@techridgeseo.com</a>
-      </p>
+    <h2>06. Contact</h2>
+    <div class="contact-box">
+      <div>
+        <h3>Legal Support</h3>
+        <p>For inquiries regarding data privacy or requests for information.</p>
+      </div>
+      <div>
+        <a href="mailto:mike@techridgeseo.com" class="btn-contact">CONTACT_OPS</a>
+        <p style="font-family:var(--font-mono);font-size:9px;color:var(--dim2);letter-spacing:.15em;text-align:center;margin-top:10px;text-transform:uppercase;">Response within 24–48H</p>
+      </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <span class="footer-copy">© {new Date().getFullYear()} RangeDOPE. All rights reserved.</span>
-  <a href="/" class="footer-home">← getrangedope.com</a>
+  <div style="display:flex;gap:24px;">
+    <a href="/">Home</a>
+    <a href="/privacy" style="color:#fff;">Privacy Policy</a>
+    <a href="mailto:mike@techridgeseo.com">Support</a>
+  </div>
+  <span>© {new Date().getFullYear()} RangeDOPE. All rights reserved.</span>
 </footer>
 
 </Base>

@@ -14,7 +14,7 @@ const {
 const canonical = new URL(Astro.url.pathname, 'https://getrangedope.com').href;
 ---
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,38 +35,61 @@ const canonical = new URL(Astro.url.pathname, 'https://getrangedope.com').href;
 
   <title>{title}</title>
 
-  <!-- Google Fonts: Space Grotesk for headings, Space Mono for UI labels -->
+  <!-- Fonts: Space Grotesk (display) + Space Mono (data/labels) + Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet"
   />
 
   <style is:global>
+    /* ── Design Tokens (Mountain West Tactical — Stitch v2) ── */
     :root {
-      --bg:        #080808;
-      --surface:   #101010;
-      --surface2:  #161616;
-      --border:    #1e1e1e;
-      --border2:   #2a2a2a;
-      --primary:   #FF3000;
-      --primary-d: #cc2600;
-      --primary-g: rgba(255,48,0,0.12);
-      --label:     #F0F0F0;
-      --dim:       #888888;
-      --dim2:      #555555;
-      --white:     #ffffff;
+      /* Surfaces */
+      --bg:              #080808;
+      --surface:         #121212;
+      --surface-low:     #1a1c1c;
+      --surface-mid:     #1e2020;
+      --surface-high:    #282a2b;
+      --surface-highest: #333535;
 
+      /* Brand */
+      --primary:         #FF3000;
+      --primary-bright:  #ff5634;
+      --primary-g:       rgba(255, 48, 0, 0.10);
+      --primary-glow:    rgba(255, 48, 0, 0.30);
+
+      /* Text */
+      --on-surface:      #e2e2e2;
+      --on-variant:      #e9bcb3;
+      --dim:             #888;
+      --dim2:            #555;
+      --white:           #ffffff;
+
+      /* Borders */
+      --border:          rgba(255, 255, 255, 0.08);
+      --border-mid:      rgba(255, 255, 255, 0.14);
+      --outline:         #af877f;
+      --outline-variant: #5e3f38;
+
+      /* Typography */
       --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
       --font-mono: 'Space Mono', 'SF Mono', monospace;
 
-      --radius-sm: 6px;
-      --radius-md: 12px;
-      --radius-lg: 20px;
+      /* Shape: 0px everywhere — "milled from billet" */
+      --radius-sm: 0px;
+      --radius-md: 0px;
+      --radius-lg: 0px;
 
-      --max-w: 1100px;
-      --gap: clamp(16px, 4vw, 48px);
+      /* Layout */
+      --max-w: 1280px;
+      --margin: 24px;
+      --gap:    clamp(16px, 4vw, 48px);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,10 +101,11 @@ const canonical = new URL(Astro.url.pathname, 'https://getrangedope.com').href;
 
     body {
       background: var(--bg);
-      color: var(--label);
+      color: var(--on-surface);
       font-family: var(--font-sans);
       line-height: 1.6;
       min-height: 100dvh;
+      overflow-x: hidden;
     }
 
     img { max-width: 100%; display: block; }
@@ -93,20 +117,73 @@ const canonical = new URL(Astro.url.pathname, 'https://getrangedope.com').href;
     }
     a:hover { opacity: 0.8; }
 
-    /* Noise texture overlay for depth */
-    body::before {
+    /* ── Utility classes ── */
+
+    /* 32px grid overlay — 5% opacity */
+    .grid-overlay {
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    /* Reticle crosshair lines through hero focal point */
+    .reticle-crosshair::before {
       content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      height: 1px;
+      background: rgba(255, 48, 0, 0.18);
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
+    }
+    .reticle-crosshair::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 0; bottom: 0;
+      width: 1px;
+      background: rgba(255, 48, 0, 0.18);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Red outer glow for primary action elements */
+    .safety-glow {
+      box-shadow: 0 0 16px var(--primary-glow), 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .safety-glow:hover {
+      box-shadow: 0 0 24px rgba(255,48,0,0.5), 0 4px 32px rgba(0,0,0,0.5);
+    }
+
+    /* Material Symbols baseline alignment */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    /* Technical tag — small monospace badge */
+    .tech-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1px solid rgba(255,48,0,0.35);
+      background: rgba(255,48,0,0.08);
+      color: var(--primary);
     }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--surface-highest); }
+
+    /* Hide scrollbar on carousel */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body>

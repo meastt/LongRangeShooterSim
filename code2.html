@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>RANGEDOPE | Precision Ballistics &amp; Hunt Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#080808",
+                      "on-primary": "#640d00",
+                      "surface-container-highest": "#333535",
+                      "secondary-fixed-dim": "#c9c6c5",
+                      "on-primary-container": "#580a00",
+                      "inverse-on-surface": "#2f3131",
+                      "surface-variant": "#333535",
+                      "surface-container-lowest": "#0c0f0f",
+                      "tertiary-container": "#929090",
+                      "surface-bright": "#37393a",
+                      "tertiary-fixed-dim": "#c8c6c5",
+                      "on-secondary-fixed-variant": "#474646",
+                      "tertiary-fixed": "#e5e2e1",
+                      "on-background": "#e2e2e2",
+                      "surface-container": "#121212",
+                      "secondary": "#c9c6c5",
+                      "on-secondary-fixed": "#1c1b1b",
+                      "on-tertiary-container": "#2a2a2a",
+                      "primary-fixed": "#ffdad3",
+                      "on-error": "#690005",
+                      "on-tertiary-fixed-variant": "#474746",
+                      "on-tertiary-fixed": "#1c1b1b",
+                      "on-surface": "#e2e2e2",
+                      "surface-tint": "#ffb4a4",
+                      "outline": "#af877f",
+                      "outline-variant": "#5e3f38",
+                      "on-tertiary": "#313030",
+                      "surface": "#121414",
+                      "on-secondary": "#313030",
+                      "on-surface-variant": "#e9bcb3",
+                      "surface-container-high": "#282a2b",
+                      "inverse-surface": "#e2e2e2",
+                      "on-secondary-container": "#b7b4b4",
+                      "error": "#ffb4ab",
+                      "on-error-container": "#ffdad6",
+                      "primary": "#FF3000",
+                      "tertiary": "#c8c6c5",
+                      "primary-container": "#ff5634",
+                      "secondary-container": "#474646",
+                      "surface-dim": "#121414",
+                      "inverse-primary": "#b82000",
+                      "error-container": "#93000a",
+                      "on-primary-fixed-variant": "#8d1600",
+                      "secondary-fixed": "#e5e2e1",
+                      "surface-container-low": "#1a1c1c",
+                      "on-primary-fixed": "#3e0500",
+                      "primary-fixed-dim": "#ffb4a4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0px",
+                      "lg": "0px",
+                      "xl": "0px",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "legal-sm": ["Space Grotesk"],
+                      "label-caps": ["Space Mono"],
+                      "headline-xl": ["Space Grotesk"],
+                      "body-md": ["Space Grotesk"],
+                      "body-lg": ["Space Grotesk"],
+                      "headline-lg": ["Space Grotesk"],
+                      "data-mono": ["Space Mono"]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #080808;
+            color: #e2e2e2;
+            -webkit-font-smoothing: antialiased
+        }
+        .grid-overlay {
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 32px 32px
+        }
+        .topo-bg {
+            background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuAyvtZ2EiesZgg2qjboGnVu3W1BSkal06riun50y61C-XN0z5KqHpGUqG-kN1UxAFOvq392aWOd4snMtZrz8AEY3y-HPw35o2iFqnG0_oPacvYEkf0thw-T7aawacVzeZPVbRo7E2wzqnIKdL3ikibG1lV_VFfz3WyP84PjkSGyj3svI95Jr1_YtvveJBBuuWMURtCP9anESjQ-hvT2ebrWGRfr4I7tZjXyRojw1y_VhsFGdVpdGICGHImNx4vxMF1pnbEjN5fLJrG2);
+            opacity: 0.03
+        }
+        .safety-glow {
+            box-shadow: 0 0 15px rgba(255, 48, 0, 0.3)
+        }
+        .reticle-crosshair::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 48, 0, 0.2);
+            z-index: 1
+        }
+        .reticle-crosshair::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 48, 0, 0.2);
+            z-index: 1
+        }
+        .phone-shadow {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="font-body-md selection:bg-primary selection:text-white overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-md border-b border-white/10 h-20 flex justify-between items-center px-8">
+<div class="text-2xl font-black tracking-widest text-white italic font-headline-xl">RANGEDOPE</div>
+<div class="hidden md:flex gap-10">
+<a class="text-orange-600 font-bold border-b-2 border-orange-600 pb-1 font-space-grotesk tracking-tighter uppercase text-sm" href="#">BALLISTICS</a>
+<a class="text-zinc-400 hover:text-white transition-colors font-space-grotesk tracking-tighter uppercase text-sm" href="#">OPTICS</a>
+<a class="text-zinc-400 hover:text-white transition-colors font-space-grotesk tracking-tighter uppercase text-sm" href="#">TERRAIN</a>
+<a class="text-zinc-400 hover:text-white transition-colors font-space-grotesk tracking-tighter uppercase text-sm" href="#">RESOURCES</a>
+</div>
+<button class="bg-primary text-white font-label-caps text-xs px-6 py-3 tracking-[0.2em] safety-glow active:scale-95 transition-all">
+        DOWNLOAD
+    </button>
+</nav>
+<!-- Hero Section -->
+<header class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+<div class="absolute inset-0 grid-overlay z-0"></div>
+<div class="absolute inset-0 topo-bg z-0"></div>
+<div class="absolute inset-0 reticle-crosshair pointer-events-none"></div>
+<div class="relative z-10 max-w-7xl mx-auto px-margin flex flex-col items-center">
+<div class="text-center mb-12">
+<div class="inline-flex items-center gap-2 mb-6 px-3 py-1 bg-white/5 border border-white/10 font-label-caps text-[10px] tracking-widest text-zinc-500">
+<span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                STABLE RELEASE v4.2.0
+            </div>
+<h1 class="font-headline-xl text-[60px] md:text-[100px] lg:text-[120px] leading-none mb-4 tracking-tighter">
+                RANGE<span class="text-primary">DOPE</span>
+</h1>
+<p class="font-headline-lg text-zinc-400 max-w-2xl mx-auto mb-10">
+                Long-Range Ballistic Solver &amp; Hunt Planner. Built for the high country.
+            </p>
+<div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">
+<button class="bg-primary text-white font-label-caps text-sm px-10 py-5 tracking-[0.2em] safety-glow w-full md:w-auto">
+                    GET THE APP
+                </button>
+<button class="border border-white/20 hover:border-white/40 text-white font-label-caps text-sm px-10 py-5 tracking-[0.2em] transition-colors w-full md:w-auto bg-black/40 backdrop-blur">
+                    [ TECHNICAL SPECS ]
+                </button>
+</div>
+</div>
+<!-- Floating Mockup Composition -->
+<div class="relative w-full max-w-4xl h-[400px] md:h-[600px] mt-8">
+<!-- Shot Plan View (Back) -->
+<div class="absolute top-0 left-1/2 -translate-x-[60%] md:-translate-x-[70%] w-[240px] md:w-[320px] transform -rotate-6 transition-transform hover:rotate-0 duration-500 z-20">
+<div class="rounded-[2rem] overflow-hidden border-[6px] border-zinc-800 phone-shadow bg-black">
+<img alt="Shot Plan View" class="w-full" src="https://lh3.googleusercontent.com/aida/ADBb0ugmhZEUcQCRuUi73d0xf-ranx4lRuq3A3fPaMcRDxmeVEtJNj3IMcdB_kaAcFxKVw3CcU4vJ6tZROWWgqJ9pWh9EgEw-QAyl6yXXucNfbmU74W792hYSCMbbatgSgSNA9F_n6altgvNVxFjlCh1pEm-vZ18arBfk5_gxb3y3GxU3iN_t0h9eM-lyjqKuUNGXMo__7qLYnHrCpGTFHonn1AXP4sNL3NpjC34BxZljEDE8p1_lWayd7093-bj8kK6D8GtT7MFMZJoq0U"/>
+</div>
+<div class="mt-4 text-center">
+<span class="font-label-caps text-[10px] text-zinc-500 tracking-widest">MAP INTERFACE / SHOT PLAN</span>
+</div>
+</div>
+<!-- Field Ballistics View (Front) -->
+<div class="absolute top-12 left-1/2 -translate-x-[40%] md:-translate-x-[30%] w-[240px] md:w-[320px] transform rotate-3 transition-transform hover:rotate-0 duration-500 z-30">
+<div class="rounded-[2rem] overflow-hidden border-[6px] border-zinc-800 phone-shadow bg-black">
+<img alt="Field Ballistics View" class="w-full" src="https://lh3.googleusercontent.com/aida/ADBb0ui_9goIukEjyJ1Wl-FAIaE80ThBWwFMS4LXTiftGoGsEEUlczS8BE1hcuP3PQFdWVr-TinIub_iP_6qNCoIhjXCYcztUOfRTQEWDS0dULQ50vOYLUVcQQ-FqU8xd_NiS3uY2ScbL00Lfs856L-McBI-J1Sa8CXTTLICD9qpIZcn9SQDja32abM2F-K_UeYxatTiTXDVrzQIPbBXq-y-__-ozr1l9Ot-GvVgaCG5xmIsYWPvUiu7FemF4RL0NxnbReIunNX-U-n96Q"/>
+</div>
+<div class="mt-4 text-center">
+<span class="font-label-caps text-[10px] text-primary tracking-widest">LIVE BALLISTIC SOLVER</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative Reticle Elements -->
+<div class="absolute bottom-10 left-10 hidden lg:block opacity-20 font-data-mono text-[10px] text-zinc-500 space-y-1">
+<p>AZM: 342.12°</p>
+<p>ELV: +1.45 MILS</p>
+<p>TMP: 42°F</p>
+</div>
+<div class="absolute bottom-10 right-10 hidden lg:block opacity-20 font-data-mono text-[10px] text-zinc-500 text-right space-y-1">
+<p>LAT: 44.36° N</p>
+<p>LON: 110.58° W</p>
+<p>ALT: 8,420 FT</p>
+</div>
+</header>
+<!-- Stats Bar -->
+<section class="bg-zinc-950 border-y border-white/10 relative z-40">
+<div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
+<div class="p-8 text-center flex flex-col items-center">
+<span class="font-data-mono text-primary text-xl font-bold mb-1">G1/G7</span>
+<span class="font-label-caps text-[10px] tracking-widest text-zinc-500">DRAG MODELS</span>
+</div>
+<div class="p-8 text-center flex flex-col items-center">
+<span class="font-data-mono text-white text-xl font-bold mb-1">05</span>
+<span class="font-label-caps text-[10px] tracking-widest text-zinc-500">MAP LAYERS</span>
+</div>
+<div class="p-8 text-center flex flex-col items-center">
+<span class="font-data-mono text-white text-xl font-bold mb-1">100%</span>
+<span class="font-label-caps text-[10px] tracking-widest text-zinc-500">OFFLINE SYNC</span>
+</div>
+<div class="p-8 text-center flex flex-col items-center">
+<span class="font-data-mono text-white text-xl font-bold mb-1">ZERO</span>
+<span class="font-label-caps text-[10px] tracking-widest text-zinc-500">SUBSCRIPTIONS</span>
+</div>
+</div>
+</section>
+<!-- Features Section -->
+<section class="py-24 bg-background relative overflow-hidden">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="mb-16">
+<h2 class="font-headline-lg text-white mb-4 uppercase tracking-tight">Tactical Advantage</h2>
+<div class="w-12 h-1 bg-primary"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/10 border border-white/10">
+<!-- Card 1 -->
+<div class="bg-surface-container p-8 flex flex-col h-full group hover:bg-zinc-900 transition-colors">
+<div class="mb-12 flex justify-between items-start">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">target</span>
+<span class="font-label-caps text-[9px] px-2 py-1 bg-black border border-primary/30 text-primary uppercase">First Principles</span>
+</div>
+<h3 class="font-headline-lg text-xl mb-4 text-white">Ballistic Precision</h3>
+<p class="text-zinc-500 text-sm font-body-md leading-relaxed">
+                    Proprietary solver utilizing point-mass equations with Coriolis, spin drift, and aerodynamic jump calculations.
+                </p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container p-8 flex flex-col h-full group hover:bg-zinc-900 transition-colors">
+<div class="mb-12 flex justify-between items-start">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">layers</span>
+<span class="font-label-caps text-[9px] px-2 py-1 bg-black border border-primary/30 text-primary uppercase">Offline Ops</span>
+</div>
+<h3 class="font-headline-lg text-xl mb-4 text-white">Terrain Mapping</h3>
+<p class="text-zinc-500 text-sm font-body-md leading-relaxed">
+                    High-resolution topographic and satellite caching for areas where cellular networks are non-existent.
+                </p>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container p-8 flex flex-col h-full group hover:bg-zinc-900 transition-colors relative">
+<div class="mb-12 flex justify-between items-start">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-label-caps text-[9px] px-2 py-1 bg-black border border-primary/30 text-primary uppercase">Waypoints</span>
+</div>
+<h3 class="font-headline-lg text-xl mb-4 text-white">Point Logging</h3>
+<p class="text-zinc-500 text-sm font-body-md leading-relaxed mb-6">
+                    Log sightings, glassing spots, and water sources. Full visual waypoint categorisation.
+                </p>
+<!-- Waypoint Peek -->
+<div class="mt-auto pt-4 relative overflow-hidden h-32 border-t border-white/5 grayscale hover:grayscale-0 transition-all cursor-crosshair">
+<img alt="Waypoint Detail" class="absolute -bottom-12 left-0 w-full object-cover" src="https://lh3.googleusercontent.com/aida/ADBb0uhD34IUhQtOjl-qgRs6JxHbm1WIeAbeHQbKI2pGUHdPNC-QkeN8hp0Pcw1xaVjHBEDaU7TRcfhANJsASmY34Ml5gNbRa_a-lRXhIAedhpPS-sXLuTre1TsT5tS8pF5Kf40pPHGfDE_G5EDte2DsQAGWMg3cEL_q3drNtXVtjUVnmYghUrgCJVVOFeHizxn-X4ToZsKnCRj4zN_QnhAydfoez4ALMvXGgyQwh5_KOsdlm1bwKal1PR86VHMvgsn6GKdaqoiPB7bok-o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent"></div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container p-8 flex flex-col h-full group hover:bg-zinc-900 transition-colors">
+<div class="mb-12 flex justify-between items-start">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">air</span>
+<span class="font-label-caps text-[9px] px-2 py-1 bg-black border border-primary/30 text-primary uppercase">Wind Analysis</span>
+</div>
+<h3 class="font-headline-lg text-xl mb-4 text-white">Active Windage</h3>
+<p class="text-zinc-500 text-sm font-body-md leading-relaxed">
+                    Visual clock-direction wind input with real-time vectoring for precise lateral adjustments.
+                </p>
+</div>
+</div>
+</div>
+</section>
+<!-- The Digital Kit (New Section) -->
+<section class="py-24 bg-zinc-950 border-y border-white/5">
+<div class="max-w-7xl mx-auto px-margin">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+<div class="lg:col-span-4">
+<h2 class="font-headline-xl text-5xl mb-6">The Digital Kit.</h2>
+<p class="text-zinc-400 font-body-lg mb-8 leading-relaxed">
+                    Precision is built on data depth. Manage complex rifle profiles and access high-fidelity DOPE tables with sub-millisecond calculation speeds.
+                </p>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-4 group">
+<div class="w-10 h-10 border border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">01</div>
+<span class="font-label-caps text-sm tracking-widest">RIFLE PROFILES</span>
+</div>
+<div class="flex items-center gap-4 group">
+<div class="w-10 h-10 border border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">02</div>
+<span class="font-label-caps text-sm tracking-widest">DYNAMIC DOPE TABLES</span>
+</div>
+<div class="flex items-center gap-4 group">
+<div class="w-10 h-10 border border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">03</div>
+<span class="font-label-caps text-sm tracking-widest">LOAD DATA SYNC</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8">
+<div class="flex gap-6 overflow-x-auto pb-8 hide-scrollbar snap-x">
+<!-- Rifle Profile Mockup -->
+<div class="flex-none w-[300px] md:w-[360px] snap-center">
+<div class="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden phone-shadow">
+<div class="p-2 bg-zinc-800/50 flex justify-between items-center">
+<div class="w-2 h-2 rounded-full bg-red-500 ml-2"></div>
+<span class="font-label-caps text-[8px] text-zinc-400 uppercase tracking-[0.2em]">Rifle Configuration</span>
+<div class="w-2 h-2 rounded-full bg-zinc-700 mr-2"></div>
+</div>
+<img alt="Rifle Profile" class="w-full" src="https://lh3.googleusercontent.com/aida/ADBb0ujuPVYURHNYpGy9LwPFMxOEEs7uE0Fm8gI6C-esokhk6bA2daSm3SNA2l0wvsn0gK6Z0TEC7lP3QU6GNQSaYwyTUJFOsDirOYkjteOX2g0uKPk2Wk4BzDhTkYqsV2gOv8cb7dNbbk1tvt_UhfebTRCiBHJY81j_nYMZb52imqMp4zfuAsSMjUvM4uhY91zBVVusUwV3GbblCIiPfuzcdbzd4g1lyLw066eoeXGXtGTkerJctjIrAF_AvQlDtIJZ9SWbh8qDoixwrA"/>
+</div>
+</div>
+<!-- DOPE Table Mockup -->
+<div class="flex-none w-[300px] md:w-[360px] snap-center">
+<div class="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden phone-shadow">
+<div class="p-2 bg-zinc-800/50 flex justify-between items-center">
+<div class="w-2 h-2 rounded-full bg-red-500 ml-2"></div>
+<span class="font-label-caps text-[8px] text-zinc-400 uppercase tracking-[0.2em]">Precision DOPE</span>
+<div class="w-2 h-2 rounded-full bg-zinc-700 mr-2"></div>
+</div>
+<img alt="DOPE Table" class="w-full" src="https://lh3.googleusercontent.com/aida/ADBb0uhJN3b-sHD08zEWKQnmPBiEhq6itsselzPaZy5HXj6_5FIkUG-eiA--OXhDYpiD7JL_coTOjUpJg_g_kmxx8mc__vXy5YIaq68v72H6LK2hf0_D26GUBymZu7EOAXVBNEoNo7bkxkTftYQ-UaNeFaZEih7nNXoErgatxNALbAgDuK9gPWjQsM0gdPz_1ZaT9roh0l9lJRpPi7egxutnoYDczpRtOnfJqk21u7BbYWVWAy5kg7qd05P_-4k6KbJSZh6ZQnvVWquVyio"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Land Ownership Section -->
+<section class="py-24 bg-background border-t border-white/5 relative overflow-hidden">
+<div class="max-w-7xl mx-auto px-margin grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="relative group order-2 lg:order-1">
+<div class="absolute -inset-4 border border-primary/20 pointer-events-none group-hover:border-primary/40 transition-colors"></div>
+<img alt="Public Land Map Display" class="w-full grayscale brightness-50 contrast-125 border border-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbw6emMJhB9tFJdfb4aRskrcELERcmVbM0JtjHoOtrmOuZ-zjy9jgNPQMKIw8_RU-QjGKgIY_OiFNvbAaQ7qwBkTUeVdNkzwChBNzfHb4_nNYvf4oJiscCKFSSSTRfYPF0d3mI8Mso4Lbf6Lub0YNg-hDOYWJyUohEJDr4Pq-QIfUM9ZRXIYwxRPU1fimuhyrnZK7-TBWR48GxPIXIgE4emv0mwntMVF9zPFICVW2rjGexBu-xRa-xMGzS7npWvFbDT2nFMo2hVUd6"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60"></div>
+<!-- Legend Overlay -->
+<div class="absolute bottom-6 left-6 p-4 bg-black/80 backdrop-blur-md border border-white/10 space-y-3">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 bg-yellow-600"></div>
+<span class="font-label-caps text-[10px] text-white">BLM LAND</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 bg-green-700"></div>
+<span class="font-label-caps text-[10px] text-white">US FOREST SERVICE</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 bg-blue-600"></div>
+<span class="font-label-caps text-[10px] text-white">STATE LAND</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 border border-white/40"></div>
+<span class="font-label-caps text-[10px] text-white">PRIVATE PROPERTY</span>
+</div>
+</div>
+</div>
+<div class="order-1 lg:order-2">
+<h2 class="font-headline-xl text-5xl mb-6">Know where you can hunt.</h2>
+<p class="text-zinc-400 font-body-lg mb-8 leading-relaxed">
+                Access high-fidelity ownership data layers covering the entire Western United States. Identify public easements, state trust sections, and private land borders with sub-meter accuracy—even when miles away from the nearest tower.
+            </p>
+<ul class="space-y-4 font-label-caps text-sm text-zinc-300">
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    INSTANT BOUNDARY ALERTS
+                </li>
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    DETAILED LAND OWNER NAMES
+                </li>
+<li class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                    ACCESS POINT MARKERS
+                </li>
+</ul>
+</div>
+</div>
+</section>
+<!-- Large CTA -->
+<section class="py-24 px-margin">
+<div class="max-w-5xl mx-auto bg-gradient-to-br from-zinc-900 to-black border border-white/10 p-12 md:p-24 text-center relative overflow-hidden">
+<div class="absolute inset-0 grid-overlay opacity-5 pointer-events-none"></div>
+<h2 class="font-headline-xl text-5xl md:text-7xl mb-8 relative z-10 italic">Built for the long shot.</h2>
+<p class="font-data-mono text-zinc-500 mb-12 max-w-xl mx-auto tracking-widest uppercase">CALCULATE. COMPENSATE. CONNECT.</p>
+<div class="flex flex-col md:flex-row gap-6 justify-center items-center relative z-10">
+<button class="bg-primary text-white font-label-caps text-md px-12 py-6 tracking-[0.2em] safety-glow">
+                DOWNLOAD NOW
+            </button>
+<div class="text-zinc-500 font-label-caps text-xs">
+                [ AVAILABLE ON IOS &amp; ANDROID ]
+            </div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-zinc-950 border-t border-white/10 py-16">
+<div class="max-w-7xl mx-auto px-margin grid grid-cols-1 md:grid-cols-2 gap-12">
+<div>
+<div class="text-xl font-bold text-white font-headline-xl mb-4 italic">RANGEDOPE</div>
+<p class="font-mono text-xs tracking-widest uppercase text-zinc-500 leading-loose">
+                ©2024 RANGEDOPE PRECISION INSTRUMENTS.<br/>
+                ALL RIGHTS RESERVED. [v4.2.0-STABLE]
+            </p>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<h4 class="font-label-caps text-primary text-xs tracking-widest">LEGAL</h4>
+<nav class="flex flex-col gap-2">
+<a class="font-mono text-xs tracking-widest uppercase text-zinc-500 hover:text-orange-600 transition-colors" href="#">PRIVACY POLICY</a>
+<a class="font-mono text-xs tracking-widest uppercase text-zinc-500 hover:text-orange-600 transition-colors" href="#">TERMS OF USE</a>
+</nav>
+</div>
+<div class="space-y-4">
+<h4 class="font-label-caps text-primary text-xs tracking-widest">SUPPORT</h4>
+<nav class="flex flex-col gap-2">
+<a class="font-mono text-xs tracking-widest uppercase text-zinc-500 hover:text-orange-600 transition-colors" href="#">TECHNICAL SPECS</a>
+<a class="font-mono text-xs tracking-widest uppercase text-zinc-500 hover:text-orange-600 transition-colors" href="#">SYSTEM STATUS</a>
+</nav>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto px-margin mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+<span class="font-mono text-[10px] text-zinc-700 tracking-[0.3em]">PRECISION IN EVERY CALCULATION</span>
+<div class="flex gap-4">
+<span class="w-8 h-[1px] bg-zinc-800"></span>
+<span class="w-8 h-[1px] bg-zinc-800"></span>
+<span class="w-8 h-[1px] bg-zinc-800"></span>
+</div>
+</div>
+</footer>
+</body></html>
