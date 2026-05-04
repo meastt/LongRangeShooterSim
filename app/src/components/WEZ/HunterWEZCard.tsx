@@ -24,6 +24,7 @@ interface Props {
 
 const SPECIES_CYCLE: Exclude<Species, 'custom'>[] = [
   'elk', 'mule_deer', 'whitetail', 'antelope', 'black_bear',
+  'mountain_lion', 'coyote', 'javelina',
 ];
 
 const LIGHT_COLORS: Record<WEZTrafficLight, string> = {
@@ -52,6 +53,10 @@ export function HunterWEZCard({ result, theme, windSigmaMil = 0.2 }: Props) {
 
   function cycleSpecies() {
     setSpeciesIdx((i) => (i + 1) % SPECIES_CYCLE.length);
+  }
+
+  function prevSpecies() {
+    setSpeciesIdx((i) => (i - 1 + SPECIES_CYCLE.length) % SPECIES_CYCLE.length);
   }
 
   return (
@@ -127,10 +132,26 @@ export function HunterWEZCard({ result, theme, windSigmaMil = 0.2 }: Props) {
             {wez.reason}
           </Text>
 
-          {/* Species cycle hint */}
-          <Text style={[styles.hint, { color: theme.dim }]}>
-            Long-press pill to change species
-          </Text>
+          {/* Species selector row */}
+          <View style={styles.speciesRow}>
+            <Pressable onPress={prevSpecies} style={styles.speciesArrow} hitSlop={8}
+              accessibilityLabel="Previous species">
+              <Text style={[styles.speciesArrowText, { color: theme.primary }]}>{'‹'}</Text>
+            </Pressable>
+            <Pressable onPress={cycleSpecies} style={styles.speciesName} hitSlop={8}
+              accessibilityLabel={`Current species: ${species.name}. Tap to cycle.`}>
+              <Text style={[styles.speciesNameText, { color: theme.label }]}>
+                {species.name.toUpperCase()}
+              </Text>
+              <Text style={[styles.speciesVital, { color: theme.dim }]}>
+                {species.vitalZoneInches}" vitals
+              </Text>
+            </Pressable>
+            <Pressable onPress={cycleSpecies} style={styles.speciesArrow} hitSlop={8}
+              accessibilityLabel="Next species">
+              <Text style={[styles.speciesArrowText, { color: theme.primary }]}>{'›'}</Text>
+            </Pressable>
+          </View>
         </View>
       )}
     </View>
@@ -199,5 +220,38 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 2,
     opacity: 0.6,
+  },
+  speciesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  speciesArrow: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  speciesArrowText: {
+    fontSize: 22,
+    lineHeight: 24,
+    fontWeight: '300',
+  },
+  speciesName: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  speciesNameText: {
+    fontFamily: FONT,
+    fontSize: 11,
+    letterSpacing: 1.5,
+  },
+  speciesVital: {
+    fontFamily: FONT,
+    fontSize: 9,
+    letterSpacing: 0.5,
   },
 });

@@ -26,6 +26,9 @@ export type Species =
   | 'whitetail'
   | 'antelope'
   | 'black_bear'
+  | 'mountain_lion'
+  | 'coyote'
+  | 'javelina'
   | 'custom';
 
 export type SpeciesParams = {
@@ -68,6 +71,24 @@ export const SPECIES_DEFAULTS: Record<Exclude<Species, 'custom'>, SpeciesParams>
     vitalZoneInches: 9,
     minImpactVelocityFps: 1800,
     minImpactEnergyFtLbs: 1200,
+  },
+  mountain_lion: {
+    name: 'Mountain Lion',
+    vitalZoneInches: 6,
+    minImpactVelocityFps: 1400,
+    minImpactEnergyFtLbs: 800,
+  },
+  coyote: {
+    name: 'Coyote',
+    vitalZoneInches: 3,
+    minImpactVelocityFps: 1000,
+    minImpactEnergyFtLbs: 200,
+  },
+  javelina: {
+    name: 'Javelina',
+    vitalZoneInches: 4,
+    minImpactVelocityFps: 1200,
+    minImpactEnergyFtLbs: 400,
   },
 };
 
