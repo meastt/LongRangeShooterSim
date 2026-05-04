@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Sentry from '@sentry/react-native';
 
 import { migrate } from 'drizzle-orm/expo-sqlite/migrator';
 import { db } from '../src/db/client';
@@ -13,6 +14,18 @@ import { getRiflesWithActiveLoad } from '../src/db/queries';
 
 // Keep the splash screen visible until fonts + DB are ready.
 SplashScreen.preventAutoHideAsync();
+
+// ─── Sentry crash reporting ─────────────────────────────────────────────
+Sentry.init({
+  dsn: process.env['EXPO_PUBLIC_SENTRY_DSN'],
+  // Capture 100% of errors during beta — reduce to 0.2 post-launch
+  tracesSampleRate: 1.0,
+  // We collect no PII — keep this false
+  sendDefaultPii: false,
+  environment: __DEV__ ? 'development' : 'production',
+  // Mute noisy logs in production
+  debug: __DEV__,
+});
 
 // ─── RevenueCat initialisation ────────────────────────────────────────────────
 // Called once at app startup. RC docs specify configure() must be called before
@@ -56,7 +69,7 @@ initRevenueCat();
 
 // ─── Root layout ──────────────────────────────────────────────────────────────
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     // Monospace for ballistic numbers — crisp in all three display modes.
     'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -99,3 +112,6 @@ export default function RootLayout() {
     </>
   );
 }
+
+// Wrap with Sentry so unhandled JS errors and native crashes are captured.
+export default Sentry.wrap(RootLayout);

@@ -48,7 +48,8 @@
         {
           "locationWhenInUsePermission": "RangeDOPE uses your location to auto-fill shooter position and fetch local weather."
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "extra": {
       "router": {},
