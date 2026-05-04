@@ -43,13 +43,11 @@
       "expo-sqlite",
       "expo-font",
       "@maplibre/maplibre-react-native",
-      [
-        "expo-location",
+      ["expo-location",
         {
           "locationWhenInUsePermission": "RangeDOPE uses your location to auto-fill shooter position and fetch local weather."
         }
-      ],
-      ["@sentry/react-native", { "uploadSourceMaps": false }]
+      ]
     ],
     "extra": {
       "router": {},
