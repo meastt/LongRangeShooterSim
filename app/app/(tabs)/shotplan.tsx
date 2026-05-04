@@ -227,6 +227,51 @@ export default function ShotPlanScreen() {
     setPendingLngLat(null);
   }
 
+  // ─── Pin tap handler — allows moving or clearing placed pins ──────────────
+  const handlePinPress = useCallback((pinId: string) => {
+    if (pinId === 'shooter') {
+      Alert.alert(
+        'Shooter Pin',
+        'What would you like to do?',
+        [
+          {
+            text: 'Move Shooter',
+            onPress: () => setDropMode('shooter'),
+          },
+          {
+            text: 'Clear Shooter',
+            style: 'destructive',
+            onPress: () => {
+              setShooter(emptyPin('SHOOTER'));
+              setDropMode('shooter');
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+    } else if (pinId === 'target') {
+      Alert.alert(
+        'Target Pin',
+        'What would you like to do?',
+        [
+          {
+            text: 'Move Target',
+            onPress: () => setDropMode('target'),
+          },
+          {
+            text: 'Clear Target',
+            style: 'destructive',
+            onPress: () => {
+              setTarget(emptyPin('TARGET'));
+              setDropMode('target');
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+        ],
+      );
+    }
+  }, []);
+
   // Derived plan data
   const sLat = parseFloat(shooter.lat);
   const sLng = parseFloat(shooter.lng);
@@ -304,6 +349,7 @@ export default function ShotPlanScreen() {
           ]}
           waypointMarkers={waypointMarkers}
           onLongPress={handleMapLongPress}
+          onPinPress={handlePinPress}
         />
 
         {/* Map mode toggle bar */}

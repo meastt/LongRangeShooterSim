@@ -158,6 +158,34 @@ function withOwnership(base: StyleSpecification): StyleSpecification {
   };
 }
 
+/**
+ * Injects ESRI World Transportation roads as a transparent raster overlay.
+ * Works on any raster style (TOPO, LIDAR, 3D, SAT). Not supported on VEC.
+ * Free, no API key required.
+ */
+const ESRI_ROADS_TILES = [
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',
+];
+
+function withRoads(base: StyleSpecification): StyleSpecification {
+  return {
+    ...base,
+    sources: {
+      ...base.sources,
+      'esri-roads': {
+        type: 'raster',
+        tiles: ESRI_ROADS_TILES,
+        tileSize: 256,
+        attribution: 'ESRI World Transportation',
+      },
+    },
+    layers: [
+      ...base.layers,
+      { id: 'roads-overlay', type: 'raster', source: 'esri-roads' },
+    ],
+  };
+}
+
 /** Order shown in the toggle — most useful for hunting first. */
 const STYLE_ORDER: StyleKey[] = ['topo', 'lidar', 'composite', 'satellite', 'vector'];
 
@@ -170,12 +198,16 @@ function StyleToggle({
   onChange,
   showOwnership,
   onToggleOwnership,
+  showRoads,
+  onToggleRoads,
   topInset = 0,
 }: {
   current: StyleKey;
   onChange: (s: StyleKey) => void;
   showOwnership: boolean;
   onToggleOwnership: () => void;
+  showRoads: boolean;
+  onToggleRoads: () => void;
   topInset?: number;
 }) {
   return (
@@ -197,7 +229,7 @@ function StyleToggle({
           </Text>
         </Pressable>
       ))}
-      {/* Ownership overlay toggle — disabled on VEC (vector style) */}
+      {/* Ownership overlay toggle */}
       {current !== 'vector' && (
         <Pressable
           onPress={onToggleOwnership}
@@ -206,6 +238,18 @@ function StyleToggle({
         >
           <Text style={[styles.styleBtnText, { color: showOwnership ? '#FFB300' : 'rgba(255,255,255,0.45)' }]}>
             OWN
+          </Text>
+        </Pressable>
+      )}
+      {/* Roads overlay toggle */}
+      {current !== 'vector' && (
+        <Pressable
+          onPress={onToggleRoads}
+          style={[styles.styleBtn, showRoads && styles.rdsBtnActive]}
+          accessibilityLabel={showRoads ? 'Hide roads overlay' : 'Show roads overlay'}
+        >
+          <Text style={[styles.styleBtnText, { color: showRoads ? '#60B8FF' : 'rgba(255,255,255,0.45)' }]}>
+            RDS
           </Text>
         </Pressable>
       )}
@@ -246,6 +290,8 @@ interface Props {
   waypointMarkers?: WaypointMarker[];
   /** Called when the user long-presses the map — fires with [lng, lat] tuple. */
   onLongPress?: (lngLat: [number, number]) => void;
+  /** Called when a pin marker is tapped — fires with pin.id. */
+  onPinPress?: (pinId: string) => void;
 }
 
 export function TacticalMap({
@@ -255,15 +301,19 @@ export function TacticalMap({
   pins = [],
   waypointMarkers = [],
   onLongPress,
+  onPinPress,
 }: Props) {
   const [styleKey, setStyleKey] = useState<StyleKey>('topo');
   const [showOwnership, setShowOwnership] = useState(false);
+  const [showRoads, setShowRoads] = useState(false);
 
-  // Compose the active style — inject BLM SMA overlay when requested.
-  // VEC is a URL string so ownership overlay is not supported on that style.
-  const activeStyle = showOwnership && typeof STYLE_MAP[styleKey] !== 'string'
-    ? withOwnership(STYLE_MAP[styleKey] as StyleSpecification)
-    : STYLE_MAP[styleKey];
+  // Compose active style — apply overlays in order (ownership under roads).
+  // VEC is a URL string so raster overlays are not supported on that style.
+  let activeStyle: string | StyleSpecification = STYLE_MAP[styleKey];
+  if (typeof activeStyle !== 'string') {
+    if (showOwnership) activeStyle = withOwnership(activeStyle);
+    if (showRoads) activeStyle = withRoads(activeStyle);
+  }
 
   return (
     <View style={styles.root}>
@@ -292,10 +342,16 @@ export function TacticalMap({
         {/* Shooter / target pin markers */}
         {pins.map((pin) => (
           <Marker key={pin.id} lngLat={pin.lngLat} anchor="bottom">
-            <View style={styles.pinMarker}>
-              <Text style={[styles.pinMarkerLabel, { color: pin.color }]}>{pin.label}</Text>
-              <View style={[styles.pinMarkerDot, { backgroundColor: pin.color, borderColor: pin.color }]} />
-            </View>
+            <Pressable
+              onPress={() => onPinPress?.(pin.id)}
+              hitSlop={12}
+              accessibilityLabel={`${pin.label} pin — tap to manage`}
+            >
+              <View style={styles.pinMarker}>
+                <Text style={[styles.pinMarkerLabel, { color: pin.color }]}>{pin.label}</Text>
+                <View style={[styles.pinMarkerDot, { backgroundColor: pin.color, borderColor: pin.color }]} />
+              </View>
+            </Pressable>
           </Marker>
         ))}
 
@@ -315,6 +371,8 @@ export function TacticalMap({
         onChange={setStyleKey}
         showOwnership={showOwnership}
         onToggleOwnership={() => setShowOwnership((v) => !v)}
+        showRoads={showRoads}
+        onToggleRoads={() => setShowRoads((v) => !v)}
         topInset={topInset}
       />
 
@@ -353,6 +411,9 @@ const styles = StyleSheet.create({
   },
   styleBtnActive: {
     backgroundColor: 'rgba(255,48,0,0.15)',
+  },
+  rdsBtnActive: {
+    backgroundColor: 'rgba(96,184,255,0.18)',
   },
   ownBtnActive: {
     backgroundColor: 'rgba(255,179,0,0.18)',

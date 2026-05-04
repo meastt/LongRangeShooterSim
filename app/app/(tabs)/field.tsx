@@ -3,7 +3,7 @@
  * Combines RifleSwitcher + FieldHUD + RangeInput + status bar colour management.
  */
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { FieldHUD } from '../../src/components/FieldHUD';
@@ -37,9 +37,11 @@ export default function FieldScreen() {
           <RifleSwitcher theme={theme} />
         </View>
 
-        {/* Main HUD */}
+        {/* Main HUD — scrollable so WEZ expansion doesn't overflow */}
         <View style={styles.hud}>
-          <FieldHUD result={result} theme={theme} />
+          <ScrollView showsVerticalScrollIndicator={false} bounces={false} keyboardShouldPersistTaps="handled">
+            <FieldHUD result={result} theme={theme} />
+          </ScrollView>
         </View>
 
         {/* Wind + Atmo chips */}
@@ -74,7 +76,7 @@ const styles = StyleSheet.create({
   },
   hud: {
     flex: 1,
-    backgroundColor: 'rgba(8, 8, 8, 0.88)',
+    backgroundColor: '#0A0A0A',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
