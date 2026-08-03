@@ -60,6 +60,12 @@ export interface FieldState {
   setShotAzimuthDeg: (az: number | null) => void;
   setInclineDeg: (deg: number) => void;
   setCantDeg: (deg: number) => void;
+  /**
+   * Bumped when profile fields change outside the DB load effect
+   * (e.g. chronograph APPLY) so Field HUD reloads.
+   */
+  profileEpoch: number;
+  bumpProfileEpoch: () => void;
 }
 
 const DISPLAY_MODE_CYCLE: DisplayMode[] = ['day', 'bright', 'night-red'];
@@ -80,6 +86,7 @@ export const useFieldStore = create<FieldState>()(
       shotAzimuthDeg: null,
       inclineDeg: 0,
       cantDeg: 0,
+      profileEpoch: 0,
 
       setRange: (yards) => set({ rangeYards: Math.max(0, Math.min(1760, yards)) }),
       setWind: (speedMph, clockPosition) =>
@@ -102,6 +109,7 @@ export const useFieldStore = create<FieldState>()(
       setInclineDeg: (deg) =>
         set({ inclineDeg: Math.max(-60, Math.min(60, deg)) }),
       setCantDeg: (deg) => set({ cantDeg: Math.max(-45, Math.min(45, deg)) }),
+      bumpProfileEpoch: () => set((s) => ({ profileEpoch: s.profileEpoch + 1 })),
     }),
     {
       name: 'aim-field-store',

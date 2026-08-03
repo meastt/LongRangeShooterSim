@@ -12,9 +12,12 @@ import { WindInput } from '../../src/components/WindInput';
 import { AtmoInput } from '../../src/components/AtmoInput';
 import { InclineInput } from '../../src/components/InclineInput';
 import { RifleSwitcher } from '../../src/components/RifleSwitcher';
+import { BleStatusStrip } from '../../src/components/BleStatusStrip';
+import { BleChronoBanner } from '../../src/components/BleChronoBanner';
 import { TacticalMap } from '../../src/components/Map/TacticalMap';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useSolverResult } from '../../src/hooks/useSolverResult';
+import { useBleBridge } from '../../src/hooks/useBleBridge';
 import { useTheme } from '../../src/theme';
 
 export default function FieldScreen() {
@@ -22,6 +25,7 @@ export default function FieldScreen() {
   const theme = useTheme(displayMode);
   const result = useSolverResult();
   const { top: topInset } = useSafeAreaInsets();
+  useBleBridge();
 
   return (
     <View style={styles.root}>
@@ -33,6 +37,9 @@ export default function FieldScreen() {
       </View>
 
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <BleStatusStrip theme={theme} />
+        <BleChronoBanner theme={theme} />
+
         {/* Rifle switcher — swipe or tap arrows to cycle rifles */}
         <View style={styles.rifleBar}>
           <RifleSwitcher theme={theme} />

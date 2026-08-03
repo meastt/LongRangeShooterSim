@@ -285,11 +285,20 @@ export default function SettingsScreen() {
     status: coldBoreToday ? 'pass' : 'warn',
   });
 
-  // 5. Dev build note
+  // 5. Offline maps note
   checks.push({
     id: 'devbuild',
     label: 'Offline maps',
     detail: 'Requires dev build (expo run:ios) — run when ready for field use.',
+    status: 'info',
+  });
+
+  // 6. BLE hardware
+  checks.push({
+    id: 'ble',
+    label: 'Field BLE devices',
+    detail:
+      'Xero / Kestrel / rangefinder pairing lives on the Field status strip. Needs EAS or expo run build (not Expo Go). Protocols unverified on hardware until soak.',
     status: 'info',
   });
 

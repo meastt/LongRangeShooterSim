@@ -32,7 +32,11 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN"
       ]
     },
     "web": {
@@ -46,6 +50,14 @@
       ["expo-location",
         {
           "locationWhenInUsePermission": "RangeDOPE uses your location to auto-fill shooter position and fetch local weather."
+        }
+      ],
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "modes": ["central"],
+          "bluetoothAlwaysPermission": "RangeDOPE connects to chronographs, Kestrel meters, and rangefinders to fill field solutions. Manual entry always works without Bluetooth."
         }
       ]
     ],

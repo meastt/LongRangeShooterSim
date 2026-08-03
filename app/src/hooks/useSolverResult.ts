@@ -73,6 +73,7 @@ export function useSolverResult(): SolverResult | null {
   const shotAzimuthDeg = useFieldStore((s) => s.shotAzimuthDeg);
   const inclineDeg = useFieldStore((s) => s.inclineDeg);
   const cantDeg = useFieldStore((s) => s.cantDeg);
+  const profileEpoch = useFieldStore((s) => s.profileEpoch);
 
   const [profile, setProfile] = useState<FieldProfile | null>(null);
   const [coldEvents, setColdEvents] = useState<ColdBoreEventRow[]>([]);
@@ -114,7 +115,7 @@ export function useSolverResult(): SolverResult | null {
     return () => {
       cancelled = true;
     };
-  }, [activeRifleId, setActiveRifleId]);
+  }, [activeRifleId, setActiveRifleId, profileEpoch]);
 
   return useMemo(() => {
     if (!profile) return null;

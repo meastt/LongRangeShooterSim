@@ -29,6 +29,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useTheme } from '../../src/theme';
 import { useSolverResult } from '../../src/hooks/useSolverResult';
+import { useBleBridge } from '../../src/hooks/useBleBridge';
+import { BleStatusStrip } from '../../src/components/BleStatusStrip';
 import { TacticalMap } from '../../src/components/Map/TacticalMap';
 import type { PinMarker, WaypointMarker } from '../../src/components/Map/TacticalMap';
 import { SunOverlay } from '../../src/components/SunOverlay';
@@ -148,6 +150,7 @@ export default function ShotPlanScreen() {
   const setLatitudeDeg = useFieldStore((s) => s.setLatitudeDeg);
   const setShotAzimuthDeg = useFieldStore((s) => s.setShotAzimuthDeg);
   const result = useSolverResult();
+  useBleBridge();
 
   const { isPro, showPaywall, PaywallModal } = useProGate(theme);
   const [offlineVisible, setOfflineVisible] = useState(false);
@@ -347,6 +350,7 @@ export default function ShotPlanScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.bg }]}>
+      <BleStatusStrip theme={theme} />
       {/* Map */}
       <View style={styles.mapContainer}>
         <TacticalMap

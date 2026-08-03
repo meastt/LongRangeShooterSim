@@ -34,6 +34,9 @@ jobs:
       - name: Bullet library tests
         run: npm run test -w @aim/bullet-library
 
+      - name: BLE parser tests
+        run: npm run test:ble
+
       - name: App typecheck
         run: npx tsc --noEmit
         working-directory: app
