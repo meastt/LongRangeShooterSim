@@ -1,130 +1,451 @@
 ---
 import Base from '../layouts/Base.astro';
 ---
-<Base title="RangeDOPE — Long-Range Ballistic Solver & Hunt Planning for iOS">
+<Base title="Aim — Precision Long-Range Ballistics & Hunt Planning for iOS & Android">
 <style>
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,60px);height:80px;background:rgba(8,8,8,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);font-family:var(--font-mono);}
-  .brand{font-size:22px;font-weight:900;letter-spacing:.18em;color:#fff;font-style:italic;font-family:var(--font-sans);}
-  .brand span{color:var(--primary);}
-  .nav-dl{background:var(--primary);color:#fff;font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;padding:12px 28px;border:none;cursor:pointer;transition:all .2s;}
-  .nav-dl:hover{background:var(--primary-bright);}
-  .hero{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:100px clamp(20px,5vw,60px) 60px;position:relative;overflow:hidden;flex-direction:column;}
-  .hero-grid{position:absolute;inset:0;} 
-  .hero-cross{position:absolute;inset:0;pointer-events:none;}
-  .hero-cross::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,48,0,.15);}
-  .hero-cross::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,48,0,.15);}
-  .hero-inner{position:relative;z-index:2;text-align:center;max-width:900px;}
-  .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:#888;background:rgba(255,255,255,.04);border:1px solid var(--border-mid);padding:6px 16px;margin-bottom:32px;}
-  .badge-dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:blink 2s infinite;}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-  h1{font-family:var(--font-sans);font-size:clamp(64px,11vw,130px);font-weight:900;line-height:.95;letter-spacing:-.03em;color:#fff;margin-bottom:20px;}
-  h1 span{color:var(--primary);}
-  .hero-sub{font-family:var(--font-sans);font-size:clamp(16px,2vw,22px);color:#888;max-width:520px;margin:0 auto 40px;line-height:1.5;}
-  .btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:72px;}
-  .btn-red{display:inline-block;background:var(--primary);color:#fff;font-family:var(--font-mono);font-size:12px;letter-spacing:.2em;padding:18px 40px;transition:all .2s;}
-  .btn-red:hover{opacity:1;background:var(--primary-bright);}
-  .btn-outline{display:inline-block;border:1px solid rgba(255,255,255,.2);color:#aaa;font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;padding:18px 36px;transition:all .2s;}
-  .btn-outline:hover{opacity:1;border-color:rgba(255,255,255,.5);color:#fff;}
-  .phones{position:relative;width:100%;max-width:700px;height:420px;margin:0 auto;}
-  .phone{position:absolute;border-radius:2rem;overflow:hidden;border:5px solid #222;box-shadow:0 25px 60px rgba(0,0,0,.6);}
-  .phone img{width:100%;display:block;}
-  .phone-back{width:240px;top:0;left:50%;transform:translateX(-75%) rotate(-6deg);z-index:2;transition:transform .5s;}
-  .phone-front{width:240px;top:30px;left:50%;transform:translateX(-25%) rotate(3deg);z-index:3;transition:transform .5s;}
-  .phone-back:hover{transform:translateX(-75%) rotate(0deg);}
-  .phone-front:hover{transform:translateX(-25%) rotate(0deg);}
-  .coord-l,.coord-r{position:absolute;bottom:40px;font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,.2);line-height:1.8;letter-spacing:.05em;}
-  .coord-l{left:40px;} .coord-r{right:40px;text-align:right;}
-
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(18,18,18,.9);}
-  .stat{padding:32px 24px;text-align:center;border-right:1px solid var(--border);}
-  .stat:last-child{border-right:none;}
-  .stat-val{display:block;font-family:var(--font-mono);font-size:clamp(20px,2.5vw,28px);font-weight:700;color:var(--primary);}
-  .stat-val.white{color:#fff;}
-  .stat-lbl{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-top:6px;}
-
-  .features{max-width:var(--max-w);margin:0 auto;padding:100px clamp(20px,5vw,60px);}
-  .section-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;color:var(--primary);text-transform:uppercase;margin-bottom:16px;}
-  .section-h2{font-family:var(--font-sans);font-size:clamp(28px,4vw,44px);font-weight:700;letter-spacing:-.02em;color:#fff;margin-bottom:60px;}
-  .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);}
-  .feat-card{background:var(--surface);padding:36px 32px;transition:background .2s;}
-  .feat-card:hover{background:var(--surface-low);}
-  .feat-icon{font-size:36px;color:var(--primary);margin-bottom:20px;display:block;}
-  .feat-card-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.15em;color:var(--primary);text-transform:uppercase;border:1px solid rgba(255,48,0,.3);padding:3px 8px;float:right;}
-  .feat-title{font-size:19px;font-weight:700;color:#fff;margin:12px 0 10px;clear:both;}
-  .feat-desc{font-size:14px;color:var(--dim);line-height:1.75;}
-
-  .kit-section{padding:100px clamp(20px,5vw,60px);background:rgba(12,15,15,.7);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-  .kit-inner{max-width:var(--max-w);margin:0 auto;display:grid;grid-template-columns:1fr 2fr;gap:64px;align-items:center;}
-  .kit-steps{display:flex;flex-direction:column;gap:16px;margin-top:28px;}
-  .kit-step{display:flex;align-items:center;gap:16px;}
-  .kit-num{width:40px;height:40px;border:1px solid rgba(255,48,0,.3);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--primary);}
-  .kit-step-lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.15em;color:#ccc;text-transform:uppercase;}
-  .kit-phones{display:flex;gap:24px;overflow-x:auto;padding-bottom:16px;}
-  .kit-phone{flex:none;width:280px;background:var(--surface);border:1px solid var(--border-mid);overflow:hidden;}
-  .kit-phone-bar{background:rgba(40,42,43,.7);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;}
-  .kit-phone-bar span{font-family:var(--font-mono);font-size:8px;letter-spacing:.15em;color:#aaa;text-transform:uppercase;}
-  .kit-phone-dot{width:8px;height:8px;border-radius:50%;background:#ff5f57;}
-  .kit-phone img{width:100%;}
-
-  .own-section{padding:100px clamp(20px,5vw,60px);background:var(--bg);}
-  .own-inner{max-width:var(--max-w);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
-  .own-img-wrap{position:relative;}
-  .own-img-wrap::before{content:'';position:absolute;inset:-12px;border:1px solid rgba(255,48,0,.2);pointer-events:none;}
-  .own-img{width:100%;filter:brightness(1.05) contrast(1.05);border:1px solid var(--border-mid);}
-  .own-legend{position:absolute;bottom:24px;left:24px;background:rgba(0,0,0,.85);border:1px solid var(--border-mid);padding:16px 20px;}
-  .own-legend-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-  .own-legend-row:last-child{margin-bottom:0;}
-  .swatch{width:12px;height:12px;flex-shrink:0;}
-  .own-legend-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;color:#fff;text-transform:uppercase;}
-  .own-text h2{font-family:var(--font-sans);font-size:clamp(28px,4vw,48px);font-weight:700;letter-spacing:-.02em;color:#fff;margin-bottom:20px;}
-  .own-text p{font-size:16px;color:var(--dim);line-height:1.8;margin-bottom:28px;}
-  .own-checks{list-style:none;display:flex;flex-direction:column;gap:12px;}
-  .own-checks li{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:#ccc;text-transform:uppercase;}
-  .own-checks .check{color:var(--primary);font-size:18px;}
-
-  .cta-section{padding:100px clamp(20px,5vw,60px);text-align:center;}
-  .cta-box{max-width:900px;margin:0 auto;border:1px solid var(--border-mid);padding:clamp(48px,8vw,96px) clamp(24px,6vw,80px);position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(18,18,18,1) 0%,rgba(8,8,8,1) 100%);}
-  .cta-box::before{content:'';position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.03) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;}
-  .cta-h2{font-family:var(--font-sans);font-size:clamp(36px,6vw,80px);font-weight:900;letter-spacing:-.03em;color:#fff;margin-bottom:16px;font-style:italic;position:relative;z-index:1;}
-  .cta-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:.25em;color:var(--dim);text-transform:uppercase;margin-bottom:48px;position:relative;z-index:1;}
-  .cta-avail{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--dim2);text-transform:uppercase;margin-top:20px;}
-
-  footer{background:rgba(6,6,6,1);border-top:1px solid var(--border);padding:64px clamp(20px,5vw,60px) 32px;}
-  .foot-grid{max-width:var(--max-w);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;padding-bottom:48px;border-bottom:1px solid var(--border);}
-  .foot-brand{font-family:var(--font-sans);font-size:20px;font-weight:900;letter-spacing:.12em;color:#fff;font-style:italic;margin-bottom:12px;}
-  .foot-brand span{color:var(--primary);}
-  .foot-copy{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--dim2);line-height:2;text-transform:uppercase;}
-  .foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
-  .foot-col h4{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--primary);text-transform:uppercase;margin-bottom:16px;}
-  .foot-col a{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:10px;}
-  .foot-col a:hover{color:var(--primary);opacity:1;}
-  .foot-bottom{max-width:var(--max-w);margin:24px auto 0;display:flex;justify-content:space-between;align-items:center;}
-  .foot-bottom span{font-family:var(--font-mono);font-size:9px;letter-spacing:.25em;color:var(--dim2);text-transform:uppercase;}
-
-  @media(max-width:900px){
-    .kit-inner{grid-template-columns:1fr;}
-    .own-inner{grid-template-columns:1fr;}
-    .own-img-wrap{order:2;}
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 clamp(20px, 5vw, 60px);
+    height: 80px;
+    background: rgba(8, 8, 8, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
   }
-  @media(max-width:600px){
-    .stats{grid-template-columns:1fr 1fr;}
-    .stat:nth-child(2){border-right:none;}
-    .stat:nth-child(3){border-top:1px solid var(--border);}
-    .phone-back,.phone-front{width:180px;}
-    .phones{height:320px;}
-    .foot-grid{grid-template-columns:1fr;}
-    .coord-l,.coord-r{display:none;}
+  .brand {
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    color: #fff;
+    font-style: italic;
+    font-family: var(--font-sans);
+  }
+  .brand span {
+    color: var(--primary);
+  }
+  .nav-dl {
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    padding: 12px 28px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .nav-dl:hover {
+    background: var(--primary-bright);
+  }
+  .hero {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px clamp(20px, 5vw, 60px) 60px;
+    position: relative;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+  }
+  .hero-cross {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hero-cross::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 48, 0, 0.15);
+  }
+  .hero-cross::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 48, 0, 0.15);
+  }
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 960px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: #aaa;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-mid);
+    padding: 8px 18px;
+    margin-bottom: 32px;
+  }
+  .badge-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  h1 {
+    font-family: var(--font-sans);
+    font-size: clamp(54px, 9.5vw, 110px);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  h1 span {
+    color: var(--primary);
+  }
+  .hero-sub {
+    font-family: var(--font-sans);
+    font-size: clamp(16px, 2vw, 22px);
+    color: #aaa;
+    max-width: 680px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+  .btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 64px;
+  }
+  .btn-red {
+    display: inline-block;
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    padding: 18px 40px;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-red:hover {
+    opacity: 1;
+    background: var(--primary-bright);
+  }
+  .btn-outline {
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaa;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    padding: 18px 36px;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-outline:hover {
+    opacity: 1;
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(18, 18, 18, 0.9);
+    width: 100%;
+  }
+  .stat {
+    padding: 32px 24px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child {
+    border-right: none;
+  }
+  .stat-val {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .stat-val.white {
+    color: #fff;
+  }
+  .stat-lbl {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .features {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 100px clamp(20px, 5vw, 60px);
+  }
+  .section-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .section-h2 {
+    font-family: var(--font-sans);
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 60px;
+  }
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .feat-card {
+    background: var(--surface);
+    padding: 36px 32px;
+    transition: background 0.2s;
+  }
+  .feat-card:hover {
+    background: var(--surface-low);
+  }
+  .feat-card-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--primary);
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 48, 0, 0.3);
+    padding: 4px 10px;
+    float: right;
+  }
+  .feat-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin: 14px 0 10px;
+    clear: both;
+  }
+  .feat-desc {
+    font-size: 14px;
+    color: var(--dim);
+    line-height: 1.75;
+  }
+
+  .own-section {
+    padding: 100px clamp(20px, 5vw, 60px);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .own-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .own-text h2 {
+    font-family: var(--font-sans);
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .own-text p {
+    font-size: 16px;
+    color: var(--dim);
+    line-height: 1.8;
+    margin-bottom: 28px;
+  }
+  .own-checks {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0;
+  }
+  .own-checks li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #ccc;
+    text-transform: uppercase;
+  }
+  .own-checks .check {
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .cta-section {
+    padding: 100px clamp(20px, 5vw, 60px);
+    text-align: center;
+  }
+  .cta-box {
+    max-width: 900px;
+    margin: 0 auto;
+    border: 1px solid var(--border-mid);
+    padding: clamp(48px, 8vw, 96px) clamp(24px, 6vw, 80px);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(18, 18, 18, 1) 0%, rgba(8, 8, 8, 1) 100%);
+  }
+  .cta-h2 {
+    font-family: var(--font-sans);
+    font-size: clamp(36px, 6vw, 80px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 16px;
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 48px;
+    position: relative;
+    z-index: 1;
+  }
+
+  footer {
+    background: rgba(6, 6, 6, 1);
+    border-top: 1px solid var(--border);
+    padding: 64px clamp(20px, 5vw, 60px) 32px;
+  }
+  .foot-grid {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .foot-brand {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: #fff;
+    font-style: italic;
+    margin-bottom: 12px;
+  }
+  .foot-brand span {
+    color: var(--primary);
+  }
+  .foot-copy {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--dim2);
+    line-height: 2;
+    text-transform: uppercase;
+  }
+  .foot-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .foot-col h4 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .foot-col a {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-decoration: none;
+  }
+  .foot-col a:hover {
+    color: var(--primary);
+  }
+  .foot-bottom {
+    max-width: var(--max-w);
+    margin: 24px auto 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .foot-bottom span {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--dim2);
+    text-transform: uppercase;
+  }
+
+  @media(max-width: 900px) {
+    .own-inner { grid-template-columns: 1fr; }
+    .foot-grid { grid-template-columns: 1fr; }
+  }
+  @media(max-width: 600px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat:nth-child(2) { border-right: none; }
+    .stat:nth-child(3) { border-top: 1px solid var(--border); }
   }
 </style>
 
 <!-- Nav -->
 <nav>
   <a href="/" style="opacity:1;text-decoration:none;">
-    <span class="brand">RANGE<span>DOPE</span></span>
+    <span class="brand">AIM<span>.</span></span>
   </a>
-  <a href="/validation">
-    <button class="nav-dl safety-glow">VALIDATION</button>
-  </a>
+  <a href="/validation" class="nav-dl safety-glow">SOLVER VALIDATION</a>
 </nav>
 
 <!-- Hero -->
@@ -133,130 +454,138 @@ import Base from '../layouts/Base.astro';
   <div class="hero-cross"></div>
 
   <div class="hero-inner">
-    <div class="badge"><span class="badge-dot"></span>CLOSED ALPHA · TESTFLIGHT · v1.1.0</div>
-    <h1>RANGE<span>DOPE</span></h1>
-    <p class="hero-sub">On-device ballistics &amp; hunt planning for long-range hunters. Built for the high country.</p>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      SOLVER VERIFIED · 74 HARNESS TESTS PASSING · 100% ON-DEVICE
+    </div>
+    <h1>PRECISION <span>BALLISTICS.</span><br/>ZERO BACKEND.</h1>
+    <p class="hero-sub">
+      Built for precision long-range hunters in the high country. On-device RK4 physics solver, Hunter WEZ hit probability, MapLibre tactical glassing maps, and 1:1 custom scope turret tape exports.
+    </p>
     <div class="btns">
       <a href="/validation" class="btn-red safety-glow">SEE SOLVER VALIDATION</a>
-      <a href="#features" class="btn-outline">[ WHAT SHIPS ]</a>
-    </div>
-
-    <!-- Phone mockups -->
-    <div class="phones">
-      <div class="phone phone-back">
-        <img src="/screenshots/shot-plan.png" alt="Shot Plan interface" loading="lazy" />
-      </div>
-      <div class="phone phone-front">
-        <img src="/screenshots/field-hud.png" alt="Field HUD ballistic solver" loading="lazy" />
-      </div>
+      <a href="#features" class="btn-outline">[ WHAT SHIPS IN V1 ]</a>
     </div>
   </div>
-
-  <div class="coord-l">AZM: 247.8°<br/>ELV: +1.45 MIL<br/>TMP: 42°F</div>
-  <div class="coord-r">LAT: 38.56° N<br/>LON: 111.09° W<br/>ALT: 7,200 FT</div>
 </header>
 
-<!-- Stats bar -->
+<!-- Stats Bar -->
 <section class="stats">
-  <div class="stat"><span class="stat-val">G1/G7</span><span class="stat-lbl">Drag Models</span></div>
-  <div class="stat"><span class="stat-val white">06</span><span class="stat-lbl">Map Layers</span></div>
-  <div class="stat"><span class="stat-val white">100%</span><span class="stat-lbl">Offline Capable</span></div>
-  <div class="stat"><span class="stat-val white">ZERO</span><span class="stat-lbl">Data Sent Anywhere</span></div>
+  <div class="stat">
+    <span class="stat-val">0.00 MIL</span>
+    <span class="stat-lbl">MAX HARNESS DEVIATION @ 1000 YD</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val white">100%</span>
+    <span class="stat-lbl">ON-DEVICE & LOCAL SQLITE STORAGE</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">&gt;600</span>
+    <span class="stat-lbl">FACTORY BULLETS IN ON-DEVICE LIB</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val white">$0 / MO</span>
+    <span class="stat-lbl">CLOUD OPERATING OVERHEAD & DATA RISK</span>
+  </div>
 </section>
 
-<!-- Features -->
-<section class="features" id="features">
-  <p class="section-eyebrow">Hunter Advantage</p>
-  <h2 class="section-h2">Everything in the field.<br/>Nothing you don't need.</h2>
+<!-- Features Section -->
+<section id="features" class="features">
+  <div class="section-eyebrow">// Core Differentiators</div>
+  <h2 class="section-h2">FIVE FEATURES NO OTHER APP COMBINES</h2>
 
   <div class="feat-grid">
+    <!-- 1. Hunter WEZ -->
     <div class="feat-card">
-      <span class="feat-card-label">First Principles</span>
-      <span class="feat-icon material-symbols-outlined">target</span>
-      <h3 class="feat-title">Ballistic Precision</h3>
-      <p class="feat-desc">Modified point-mass solver with G1/G7 drag, atmosphere, lag-time wind, and zeroing. Validated against published trajectory tables. Advanced drift corrections (Coriolis, spin, AJ) ship as they clear the harness.</p>
+      <span class="feat-card-label">Ethical Engine</span>
+      <div class="feat-title">Hunter WEZ (Wounding Zone)</div>
+      <p class="feat-desc">
+        Computes vital-zone hit probability using Gaussian lateral wind dispersion models (&sigma;<sub>wind</sub>) combined with species-specific minimum impact velocity &amp; energy thresholds (Elk, Mule Deer, Whitetail, Pronghorn). Provides clear Clear / Marginal / Hold guidance.
+      </p>
     </div>
+
+    <!-- 2. ShotPlan -->
     <div class="feat-card">
-      <span class="feat-card-label">Offline Ops</span>
-      <span class="feat-icon material-symbols-outlined">layers</span>
-      <h3 class="feat-title">Terrain Mapping</h3>
-      <p class="feat-desc">USGS TOPO, LiDAR relief, 3D composite, satellite, and vector styles. Download hunt areas for offline use. ESRI roads overlay where available.</p>
+      <span class="feat-card-label">Tactical Maps</span>
+      <div class="feat-title">ShotPlan &amp; Glassing Overlay</div>
+      <p class="feat-desc">
+        MapLibre vector maps with USGS topo &amp; ESRI imagery overlays, offline region caching, and SunCalc.js integration to compute exact sun position and ridge shadow angles at your planned glassing time.
+      </p>
     </div>
+
+    <!-- 3. Wind-Risk Envelope -->
     <div class="feat-card">
-      <span class="feat-card-label">Waypoints</span>
-      <span class="feat-icon material-symbols-outlined">location_on</span>
-      <h3 class="feat-title">Hunt Scouting</h3>
-      <p class="feat-desc">Drop GPS-precise sightings, stands, glassing spots, water, food, and migration corridors. Long-press the map — it's that fast.</p>
+      <span class="feat-card-label">Atmospherics</span>
+      <div class="feat-title">Wind-Risk Envelope</div>
+      <p class="feat-desc">
+        Converts single wind readings into dynamic confidence bands using upper-air winds aloft variance from Open-Meteo &amp; NOAA HRRR atmospheric models.
+      </p>
     </div>
+
+    <!-- 4. Cold-Bore Intelligence -->
     <div class="feat-card">
-      <span class="feat-card-label">Ethics Layer</span>
-      <span class="feat-icon material-symbols-outlined">air</span>
-      <h3 class="feat-title">Hunter WEZ</h3>
-      <p class="feat-desc">Estimated vital-zone hit probability from dispersion, wind sigma, and impact energy. A decision aid — you remain responsible for every shot.</p>
+      <span class="feat-card-label">Truing &amp; DOPE</span>
+      <div class="feat-title">Cold-Bore Intelligence</div>
+      <p class="feat-desc">
+        Automatically logs first-shot POI offsets categorized by rifle, load, ambient temperature, and suppressor configuration to predict clean-cold barrel shift before you take the shot.
+      </p>
+    </div>
+
+    <!-- 5. Suppressor Variants & CDS Tapes -->
+    <div class="feat-card">
+      <span class="feat-card-label">Hardware &amp; Print</span>
+      <div class="feat-title">Suppressor Shift &amp; CDS Tape Export</div>
+      <p class="feat-desc">
+        Tracks &Delta;MV and POI shift when attaching a suppressor. Export custom 1:1 scale printable scope turret tape wraps (PDF) formatted to your optic's exact diameter and click values.
+      </p>
+    </div>
+
+    <!-- 6. Zero Backend -->
+    <div class="feat-card">
+      <span class="feat-card-label">Privacy Invariant</span>
+      <div class="feat-title">Zero Cloud. Zero Data Risk.</div>
+      <p class="feat-desc">
+        All rifle profiles, DOPE tables, and secret hunting coordinates remain 100% on your local device in high-performance SQLite. No cloud account required, no server downtime, no data leaks.
+      </p>
     </div>
   </div>
 </section>
 
-<!-- The Digital Kit -->
-<section class="kit-section">
-  <div class="kit-inner">
-    <div>
-      <p class="section-eyebrow">The Digital Kit</p>
-      <h2 class="section-h2" style="margin-bottom:12px;">Precision is built on data depth.</h2>
-      <p style="font-size:15px;color:var(--dim);line-height:1.8;margin-bottom:28px;">Manage rifle profiles and generate DOPE tables on-device — no login, no cloud. Dial adjustments. Holdover in MIL or MOA. Public harness results on the validation page.</p>
-      <div class="kit-steps">
-        <div class="kit-step"><div class="kit-num">01</div><span class="kit-step-lbl">Rifle Profiles</span></div>
-        <div class="kit-step"><div class="kit-num">02</div><span class="kit-step-lbl">Dynamic DOPE Tables</span></div>
-        <div class="kit-step"><div class="kit-num">03</div><span class="kit-step-lbl">MV &amp; DSF Truing Wizards</span></div>
-      </div>
-    </div>
-    <div class="kit-phones hide-scrollbar">
-      <div class="kit-phone">
-        <div class="kit-phone-bar"><div class="kit-phone-dot"></div><span>Rifle Configuration</span><div></div></div>
-        <img src="/screenshots/profiles.png" alt="Rifle profile screen" loading="lazy" />
-      </div>
-      <div class="kit-phone">
-        <div class="kit-phone-bar"><div class="kit-phone-dot"></div><span>Precision DOPE</span><div></div></div>
-        <img src="/screenshots/dope-table.png" alt="DOPE table screen" loading="lazy" />
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Land Ownership -->
+<!-- Zero Backend Guarantee -->
 <section class="own-section">
   <div class="own-inner">
-    <div class="own-img-wrap">
-      <img src="/screenshots/waypoints.png" alt="Map with land ownership overlay" class="own-img" loading="lazy" />
-      <div class="own-legend">
-        <div class="own-legend-row"><div class="swatch" style="background:#c8a227"></div><span class="own-legend-lbl">BLM Land</span></div>
-        <div class="own-legend-row"><div class="swatch" style="background:#3d6b3d"></div><span class="own-legend-lbl">US Forest Service</span></div>
-        <div class="own-legend-row"><div class="swatch" style="background:#2e5a8a"></div><span class="own-legend-lbl">State Land</span></div>
-        <div class="own-legend-row"><div class="swatch" style="background:transparent;border:1px solid rgba(255,255,255,.3)"></div><span class="own-legend-lbl">Private Property</span></div>
-      </div>
+    <div class="own-text">
+      <h2>BUILT FOR THE BACKCOUNTRY.</h2>
+      <p>
+        Most shooting apps fail when you step off the grid — forced account logins, broken cloud syncs, and sluggish network timeouts right when a bull breaks timber. Aim is built on-device first:
+      </p>
+      <ul class="own-checks">
+        <li><span class="check">✓</span> 100% Offline RK4 Point-Mass Solver</li>
+        <li><span class="check">✓</span> Garmin Xero C1 &amp; Kestrel BLE Integration</li>
+        <li><span class="check">✓</span> One-Tap Strelok, Hornady 4DOF &amp; AB Importers</li>
+        <li><span class="check">✓</span> Signed-QR Offline Profile Share</li>
+      </ul>
     </div>
     <div class="own-text">
-      <p class="section-eyebrow">Land Ownership</p>
-      <h2>Know where you can hunt.</h2>
-      <p>The BLM Surface Management Agency overlay on every map style — the same federal data used by onX Hunt, rendered free directly from government tile servers. No subscription required.</p>
-      <ul class="own-checks">
-        <li><span class="check material-symbols-outlined">check_circle</span>Public vs. private at a glance</li>
-        <li><span class="check material-symbols-outlined">check_circle</span>Download areas before you leave cell service</li>
-        <li><span class="check material-symbols-outlined">check_circle</span>Free — no onX subscription needed</li>
-      </ul>
+      <div style="background:var(--surface);border:1px solid var(--border-mid);padding:32px;border-radius:8px;">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--primary);letter-spacing:.2em;margin-bottom:12px;text-transform:uppercase;">// FIELD HUD GLOVE RULES</div>
+        <p style="font-size:14px;color:#aaa;line-height:1.7;margin-bottom:16px;">
+          Tested for extreme conditions: 56&times;56 dp minimum touch targets, Night-Red vision preservation mode, and &le;1.5s cold-start solution loading.
+        </p>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--dim2);letter-spacing:.1em;text-transform:uppercase;">
+          EXPO SDK 54 · REACT NATIVE · DRIZZLE ORM · MAPLIBRE NATIVE
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
+<!-- CTA Section -->
 <section class="cta-section">
   <div class="cta-box">
-    <h2 class="cta-h2">Closed alpha for hunters.</h2>
-    <p class="cta-sub">TestFlight first · public App Store when paywall &amp; hardware soak are ready</p>
-    <div style="position:relative;z-index:1;">
-      <a href="/validation" class="btn-red safety-glow" style="font-size:13px;padding:20px 56px;">READ THE VALIDATION PAGE</a>
-      <p class="cta-avail">[ Ask on Rokslide / Hunt Talk for TestFlight · iOS alpha ]</p>
-    </div>
+    <h2 class="cta-h2">VERIFIED PHYSICS.</h2>
+    <div class="cta-sub">Inspect our public validation harness against JBM &amp; Berger fixtures</div>
+    <a href="/validation" class="btn-red safety-glow" style="text-decoration:none;">VIEW SOLVER VALIDATION RESULTS</a>
   </div>
 </section>
 
@@ -264,27 +593,30 @@ import Base from '../layouts/Base.astro';
 <footer>
   <div class="foot-grid">
     <div>
-      <div class="foot-brand">RANGE<span>DOPE</span></div>
-      <p class="foot-copy">©{new Date().getFullYear()} RangeDOPE Precision Instruments.<br/>All rights reserved. [v1.1.0-BETA]</p>
+      <div class="foot-brand">AIM<span>.</span></div>
+      <div class="foot-copy">
+        Cross-platform long-range ballistics &amp; hunt planner.<br/>
+        Zero-backend · On-device local storage · Built for precision hunters.
+      </div>
     </div>
     <div class="foot-cols">
       <div class="foot-col">
-        <h4>Legal</h4>
+        <h4>Navigation</h4>
+        <a href="/">Home</a>
+        <a href="/validation">Solver Validation</a>
         <a href="/privacy">Privacy Policy</a>
-        <a href="/privacy">Terms of Use</a>
       </div>
       <div class="foot-col">
-        <h4>Support</h4>
-        <a href="/validation">Solver Validation</a>
-        <a href="https://apps.apple.com/app/id6765543307" target="_blank" rel="noopener">App Store</a>
-        <a href="mailto:mike@techridgeseo.com">Contact Ops</a>
+        <h4>Platform</h4>
+        <a href="#features">Features</a>
+        <a href="#features">Hunter WEZ</a>
+        <a href="#features">Turret Tape Export</a>
       </div>
     </div>
   </div>
   <div class="foot-bottom">
-    <span>Precision in every calculation</span>
-    <span>getrangedope.com</span>
+    <span>&copy; 2026 Aim. All rights reserved.</span>
+    <span>Zero cloud tracking.</span>
   </div>
 </footer>
-
 </Base>

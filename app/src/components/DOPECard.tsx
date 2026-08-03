@@ -44,6 +44,7 @@ import { buildEffectiveSolutionInputs } from '../lib/profileToSolverInput';
 import type { FieldProfile } from '../db/queries';
 import { useFieldStore } from '../store/fieldStore';
 import type { Theme } from '../theme';
+import { TurretTapeExportModal } from './TurretTapeExportModal';
 
 const FONT = 'SpaceMono-Regular';
 const MIL_TO_MOA = 3.43775;
@@ -330,6 +331,7 @@ export function DOPECard({
 }: Props) {
   const { width } = useWindowDimensions();
   const [exporting, setExporting] = useState(false);
+  const [tapeModalVisible, setTapeModalVisible] = useState(false);
   const latitudeDeg = useFieldStore((s) => s.latitudeDeg);
   const shotAzimuthDeg = useFieldStore((s) => s.shotAzimuthDeg);
   const inclineDeg = useFieldStore((s) => s.inclineDeg);
@@ -390,6 +392,16 @@ export function DOPECard({
             {profile.rifle.name} · {profile.zero.zeroRangeYards}yd zero
           </Text>
         </View>
+        <Pressable
+          onPress={() => setTapeModalVisible(true)}
+          hitSlop={12}
+          accessibilityLabel="Export Custom Scope Turret Tape PDF"
+          style={[styles.exportBtn, { borderColor: theme.primary }]}
+        >
+          <Ionicons name="print-outline" size={18} color={theme.primary} />
+          <Text style={[styles.exportBtnText, { color: theme.primary }]}>TAPE</Text>
+        </Pressable>
+
         <Pressable
           onPress={exportPDF}
           disabled={exporting}
@@ -514,6 +526,20 @@ export function DOPECard({
           )}
         </View>
       </ScrollView>
+
+      <TurretTapeExportModal
+        visible={tapeModalVisible}
+        theme={theme}
+        rifleName={profile.rifle.name}
+        caliber={profile.rifle.caliber}
+        bulletName={profile.load.bulletName}
+        weightGrains={profile.load.weightGrains}
+        muzzleVelocityFps={profile.load.muzzleVelocityFps}
+        zeroRangeYards={profile.zero.zeroRangeYards}
+        clicksPerMrad={profile.scope.clicksPerMrad}
+        trajectoryRows={rows}
+        onClose={() => setTapeModalVisible(false)}
+      />
     </View>
   );
 }

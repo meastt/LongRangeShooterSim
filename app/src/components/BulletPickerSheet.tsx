@@ -88,16 +88,40 @@ export function BulletPickerSheet({ visible, theme, onSelect, onCancel }: Props)
             autoFocus
           />
 
-          {query.trim().length === 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipScroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            {['Hornady', 'Berger', 'Sierra', 'Lapua', 'Federal', 'Nosler', 'Barnes'].map((mfg) => (
+              <Pressable
+                key={mfg}
+                onPress={() => setQuery(mfg)}
+                style={[
+                  styles.chip,
+                  { borderColor: theme.border, backgroundColor: theme.surface },
+                  query.toLowerCase().includes(mfg.toLowerCase()) && { backgroundColor: theme.primary },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    { color: query.toLowerCase().includes(mfg.toLowerCase()) ? theme.bg : theme.label },
+                  ]}
+                >
+                  {mfg}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {results.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: theme.dim }]}>
-                Start typing to search {'>'}600 manufacturer-published bullets.
-              </Text>
-            </View>
-          ) : results.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: theme.dim }]}>
-                No matches. Try a different spelling, or enter this bullet manually below.
+                {query.trim().length === 0
+                  ? 'Tap a manufacturer above or type to search >600 bullets.'
+                  : 'No matches found. Check your spelling or enter bullet manually below.'}
               </Text>
             </View>
           ) : (
@@ -182,4 +206,23 @@ const styles = StyleSheet.create({
   rowSub: { fontFamily: FONT, fontSize: 11, letterSpacing: 0.5 },
   emptyState: { padding: 24, alignItems: 'center' },
   emptyText: { fontFamily: FONT, fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  chipScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipText: {
+    fontFamily: FONT,
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
 });
