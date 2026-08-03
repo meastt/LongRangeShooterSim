@@ -182,6 +182,9 @@ export default function NewRifleScreen() {
         muzzleVelocityFps: mvNum,
         powderCharge: null,
         libraryBulletId,
+        suppressorMvDeltaFps: null,
+        suppressorZeroShiftMilsElev: null,
+        suppressorZeroShiftMilsWind: null,
         notes: null,
       });
 

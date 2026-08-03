@@ -22,10 +22,15 @@
  * MapLibre native warning: "Invalid geometry in line layer"
  *   Benign — only appears when the VEC style is active. Raster styles are unaffected.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Pressable, Text, type NativeSyntheticEvent } from 'react-native';
 import { Map, Camera, Marker } from '@maplibre/maplibre-react-native';
 import type { StyleSpecification } from '@maplibre/maplibre-react-native';
+import {
+  bestOfflineRegionForSource,
+  localTileUrlTemplate,
+  type TileSource,
+} from '../../utils/offlineRegions';
 // PressEvent type — inlined to avoid package.json export restrictions
 type PressEvent = {
   lngLat: [number, number]; // [longitude, latitude]
@@ -122,6 +127,23 @@ const STYLE_LABELS: Record<StyleKey, string> = {
   satellite: 'SAT',
   vector:    'VEC',
 };
+
+function withOfflineTiles(
+  style: StyleSpecification,
+  sourceKey: string,
+  template: string,
+): StyleSpecification {
+  const sources = { ...style.sources };
+  const existing = sources[sourceKey];
+  if (existing && existing.type === 'raster') {
+    sources[sourceKey] = {
+      ...existing,
+      tiles: [template],
+      attribution: `${'attribution' in existing && existing.attribution ? existing.attribution : 'Tiles'} · Offline`,
+    };
+  }
+  return { ...style, sources };
+}
 
 // ─── BLM Surface Management Agency overlay ────────────────────────────────────
 //
@@ -306,11 +328,43 @@ export function TacticalMap({
   const [styleKey, setStyleKey] = useState<StyleKey>('topo');
   const [showOwnership, setShowOwnership] = useState(false);
   const [showRoads, setShowRoads] = useState(false);
+  const [offlineTopoUrl, setOfflineTopoUrl] = useState<string | null>(null);
+  const [offlineSatUrl, setOfflineSatUrl] = useState<string | null>(null);
 
-  // Compose active style — apply overlays in order (ownership under roads).
-  // VEC is a URL string so raster overlays are not supported on that style.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [topoRegion, satRegion] = await Promise.all([
+        bestOfflineRegionForSource('usgs_topo'),
+        bestOfflineRegionForSource('esri_satellite'),
+      ]);
+      if (cancelled) return;
+      setOfflineTopoUrl(
+        topoRegion ? localTileUrlTemplate(topoRegion.id, 'usgs_topo') : null,
+      );
+      setOfflineSatUrl(
+        satRegion ? localTileUrlTemplate(satRegion.id, 'esri_satellite') : null,
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Compose active style — prefer offline tiles for TOPO / SAT when available.
   let activeStyle: string | StyleSpecification = STYLE_MAP[styleKey];
+  let offlineActive = false;
   if (typeof activeStyle !== 'string') {
+    if (styleKey === 'topo' && offlineTopoUrl) {
+      activeStyle = withOfflineTiles(activeStyle, 'usgs', offlineTopoUrl);
+      offlineActive = true;
+    } else if (styleKey === 'satellite' && offlineSatUrl) {
+      activeStyle = withOfflineTiles(activeStyle, 'esri', offlineSatUrl);
+      offlineActive = true;
+    } else if (styleKey === 'composite' && offlineSatUrl) {
+      activeStyle = withOfflineTiles(activeStyle, 'satellite', offlineSatUrl);
+      offlineActive = true;
+    }
     if (showOwnership) activeStyle = withOwnership(activeStyle);
     if (showRoads) activeStyle = withRoads(activeStyle);
   }
@@ -376,6 +430,12 @@ export function TacticalMap({
         topInset={topInset}
       />
 
+      {offlineActive && (
+        <View style={[styles.offlineBadge, { top: topInset + 48 }]} pointerEvents="none">
+          <Text style={styles.offlineBadgeText}>OFFLINE TILES</Text>
+        </View>
+      )}
+
       {/* Tactical crosshair overlay */}
       <View style={styles.crosshairOverlay} pointerEvents="none">
         <View style={styles.crossH} />
@@ -403,6 +463,22 @@ const styles = StyleSheet.create({
     padding: 4,
     borderWidth: 1,
     borderColor: 'rgba(255,80,0,0.25)',
+  },
+  offlineBadge: {
+    position: 'absolute',
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.5)',
+  },
+  offlineBadgeText: {
+    fontFamily: 'SpaceMono-Regular',
+    fontSize: 9,
+    letterSpacing: 1,
+    color: '#22C55E',
   },
   styleBtn: {
     paddingHorizontal: 8,

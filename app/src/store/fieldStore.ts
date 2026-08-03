@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AtmosphericConditions } from '@aim/solver';
+import { WEZ_ENABLED_BY_DEFAULT } from '../lib/jurisdiction';
 
 export type DisplayMode = 'day' | 'bright' | 'night-red';
 export type HoldUnit = 'MIL' | 'MOA';
@@ -26,6 +27,16 @@ export interface FieldState {
   holdUnit: HoldUnit;
   /** ID of the rifle whose active load + zero feeds the HUD. */
   activeRifleId: string | null;
+  /**
+   * Hunter WEZ decision aid. Default comes from jurisdiction.ts;
+   * hunters may opt in/out in Settings.
+   */
+  wezEnabled: boolean;
+  /**
+   * When true and cold-bore confidence allows, add predicted cold offset
+   * to elev hold (first-shot of the day). Default off — display-only until armed.
+   */
+  coldBoreApplyOffset: boolean;
 
   // Actions
   setRange: (yards: number) => void;
@@ -35,6 +46,8 @@ export interface FieldState {
   cycleDisplayMode: () => void;
   toggleHoldUnit: () => void;
   setActiveRifleId: (id: string | null) => void;
+  setWezEnabled: (enabled: boolean) => void;
+  setColdBoreApplyOffset: (enabled: boolean) => void;
 }
 
 const DISPLAY_MODE_CYCLE: DisplayMode[] = ['day', 'bright', 'night-red'];
@@ -49,6 +62,8 @@ export const useFieldStore = create<FieldState>()(
       displayMode: 'day',
       holdUnit: 'MIL',
       activeRifleId: null,
+      wezEnabled: WEZ_ENABLED_BY_DEFAULT,
+      coldBoreApplyOffset: false,
 
       setRange: (yards) => set({ rangeYards: Math.max(0, Math.min(1760, yards)) }),
       setWind: (speedMph, clockPosition) =>
@@ -64,6 +79,8 @@ export const useFieldStore = create<FieldState>()(
       toggleHoldUnit: () =>
         set({ holdUnit: get().holdUnit === 'MIL' ? 'MOA' : 'MIL' }),
       setActiveRifleId: (id) => set({ activeRifleId: id }),
+      setWezEnabled: (enabled) => set({ wezEnabled: enabled }),
+      setColdBoreApplyOffset: (enabled) => set({ coldBoreApplyOffset: enabled }),
     }),
     {
       name: 'aim-field-store',

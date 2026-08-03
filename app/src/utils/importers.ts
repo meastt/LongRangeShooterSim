@@ -233,8 +233,9 @@ export async function insertImportedProfiles(
         id: rifleId,
         name: p.name,
         caliber: p.caliber,
-        twistRateIn: 0 as any,      // not in Strelok export
-        barrelLengthIn: 0 as any,   // not in Strelok export
+        // Strelok/Hornady exports usually omit twist and barrel — hunter fills in.
+        twistRateIn: null,
+        barrelLengthIn: null,
         suppressorEnabled: false,
         notes: null,
       });
@@ -244,13 +245,16 @@ export async function insertImportedProfiles(
         rifleId,
         isActive: true,
         bulletName: p.bulletName,
-        weightGrains: p.weightGrains as any,
-        diameterInches: p.diameterInches as any,
-        bc: p.bc as any,
+        weightGrains: p.weightGrains,
+        diameterInches: p.diameterInches,
+        bc: p.bc,
         dragModel: p.dragModel,
-        muzzleVelocityFps: p.muzzleVelocityFps as any,
+        muzzleVelocityFps: p.muzzleVelocityFps,
         powderCharge: null,
         libraryBulletId: null,
+        suppressorMvDeltaFps: null,
+        suppressorZeroShiftMilsElev: null,
+        suppressorZeroShiftMilsWind: null,
         notes: null,
       });
 

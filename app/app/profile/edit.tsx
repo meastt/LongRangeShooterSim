@@ -252,6 +252,9 @@ export default function EditRifleScreen() {
         muzzleVelocityFps: mvNum,
         powderCharge: powderCharge.trim() || null,
         libraryBulletId,
+        suppressorMvDeltaFps: profile.load.suppressorMvDeltaFps ?? null,
+        suppressorZeroShiftMilsElev: profile.load.suppressorZeroShiftMilsElev ?? null,
+        suppressorZeroShiftMilsWind: profile.load.suppressorZeroShiftMilsWind ?? null,
         notes: profile.load.notes ?? null,
       });
 

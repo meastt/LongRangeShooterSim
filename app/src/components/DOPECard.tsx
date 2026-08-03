@@ -36,6 +36,7 @@ import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { computeTrajectory, windHoldMils as solverWindHold } from '@aim/solver';
 import type { TrajectoryRow, TrajectoryInputs } from '@aim/solver';
+import { buildEffectiveSolutionInputs } from '../lib/profileToSolverInput';
 import type { FieldProfile } from '../db/queries';
 import type { Theme } from '../theme';
 
@@ -87,20 +88,8 @@ function buildDOPE(
   windSpeedMph: number,
   windClockPos: number,
 ): DOPERow[] {
-  const inputs: TrajectoryInputs = {
-    bullet: {
-      weightGrains: profile.load.weightGrains as any,
-      diameterInches: profile.load.diameterInches as any,
-      bc: profile.load.bc as any,
-      dragModel: profile.load.dragModel as 'G1' | 'G7',
-    },
-    muzzleVelocityFps: profile.load.muzzleVelocityFps as any,
-    scopeHeightInches: profile.zero.scopeHeightInches as any,
-    zeroRangeYards: profile.zero.zeroRangeYards as any,
-    atmosphere: profile.atmosphericSnapshot,
-  };
-
-  const traj = computeTrajectory(inputs);
+  const effective = buildEffectiveSolutionInputs(profile, profile.atmosphericSnapshot);
+  const traj = computeTrajectory(effective.trajectory);
   const clicksPerMrad = profile.scope.clicksPerMrad;
   const crosswindFraction = clockToWindFraction(windClockPos);
 
@@ -117,15 +106,19 @@ function buildDOPE(
 
     const crosswindMph = windSpeedMph * crosswindFraction;
     // Lag-time (Didion) wind hold — see packages/solver/src/wind.ts.
-    const mv = profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'];
-    const windHoldMils = solverWindHold(crosswindMph, tof, row.rangeYards, mv) as number;
+    const mv = effective.effectiveMvFps as TrajectoryInputs['muzzleVelocityFps'];
+    const windHoldMils =
+      (solverWindHold(crosswindMph, tof, row.rangeYards, mv) as number) +
+      effective.suppressorWindShiftMils;
     const windHoldPerMph = solverWindHold(1, tof, row.rangeYards, mv) as number;
+    const elevHold =
+      (row.holdMils as number) + effective.suppressorElevShiftMils;
 
     return {
       targetRangeYards: targetRange,   // always the clean 50yd step
       rangeYards: rangeYd,
-      dialClicks: Math.round((row.holdMils as number) * clicksPerMrad),
-      holdMils: row.holdMils as number,
+      dialClicks: Math.round(elevHold * clicksPerMrad),
+      holdMils: elevHold,
       windHoldMils,
       windHoldPerMph,
       velocityFps: row.velocityFps as number,

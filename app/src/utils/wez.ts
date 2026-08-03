@@ -176,13 +176,13 @@ export function computeWEZ(
     reason = `Impact energy ${Math.round(row.energyFtLbs)} ft·lb below ${species.minImpactEnergyFtLbs} ft·lb minimum for ${species.name}`;
   } else if (hitPct < 65) {
     trafficLight = 'hold';
-    reason = `Hit probability ${hitPct.toFixed(0)}% — wind uncertainty too high at this range`;
+    reason = `Estimated hit probability ${hitPct.toFixed(0)}% — wind uncertainty is high at this range`;
   } else if (hitPct < 85) {
     trafficLight = 'marginal';
-    reason = `Hit probability ${hitPct.toFixed(0)}% — marginal. Reduce wind uncertainty or range.`;
+    reason = `Estimated hit probability ${hitPct.toFixed(0)}% — marginal. Consider reducing range or waiting for steadier wind.`;
   } else {
     trafficLight = 'clear';
-    reason = `${hitPct.toFixed(0)}% hit probability — shot is within ethical parameters`;
+    reason = `Estimated hit probability ${hitPct.toFixed(0)}%. You are responsible for the shot decision.`;
   }
 
   return { hitPct, velocityAdequate, energyAdequate, trafficLight, reason };

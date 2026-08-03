@@ -11,32 +11,43 @@
  *   Crosswind component = windSpeedMph × sin(clockAngleDeg)
  *   Hold uses the solver's lag-time (Didion) formula: drift = Vw × (TOF − range/MV).
  *   See packages/solver/src/wind.ts for derivation and validation fixtures.
+ *
+ * Suppressor + cold-bore corrections are applied post-solve per
+ * docs/specs/suppressor-profiles.md and docs/specs/cold-bore-intelligence.md.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { computeTrajectory, solutionAtRange, windHoldMils } from '@aim/solver';
-import type { TrajectoryRow, TrajectoryInputs } from '@aim/solver';
-import { getFieldProfile, getRiflesWithActiveLoad } from '../db/queries';
-import type { FieldProfile } from '../db/queries';
+import type { TrajectoryRow } from '@aim/solver';
+import { getColdBoreEvents, getFieldProfile, getRiflesWithActiveLoad } from '../db/queries';
+import type { ColdBoreEventRow, FieldProfile } from '../db/queries';
 import { useFieldStore } from '../store/fieldStore';
+import { buildEffectiveSolutionInputs } from '../lib/profileToSolverInput';
+import { predictColdBoreOffset } from '../lib/coldBore';
+import type { ColdBorePrediction } from '../lib/coldBore';
 
 export interface SolverResult {
   row: TrajectoryRow;
   profile: FieldProfile;
-  /** Crosswind elevation hold in milliradians. Positive = aim right (wind from left). */
+  /** Crosswind hold in milliradians (includes suppressor wind shift). Positive = aim right. */
   windHoldMils: number;
-  /** Clicks to dial on the elevation turret (hold × clicksPerMrad). */
+  /** Elevation hold in milliradians after suppressor + optional cold-bore offsets. */
+  elevHoldMils: number;
+  /** Clicks to dial on the elevation turret (elevHold × clicksPerMrad). */
   dialClicks: number;
+  /** Effective MV used in the solve (may include suppressor delta). */
+  effectiveMvFps: number;
+  suppressorDeltaMissing: boolean;
+  coldBore: ColdBorePrediction | null;
+  /** Whether cold-bore offset was added into elevHoldMils / dialClicks. */
+  coldBoreApplied: boolean;
 }
 
 /**
  * Converts wind clock position (1–12) to the fractional crosswind component.
  * 12 o'clock = headwind = 0, 3 o'clock = full-value right = 1,
  * 6 o'clock = tailwind = 0, 9 o'clock = full-value left = -1.
- *
- * sin(clockAngle): clock positions are 0°=12, 90°=3, 180°=6, 270°=9
  */
 function clockToWindFraction(clockPosition: number): number {
-  // Map 1–12 to radians: 12 → 0, 3 → π/2, 6 → π, 9 → 3π/2
   const deg = ((clockPosition - 12) / 12) * 360;
   return Math.sin((deg * Math.PI) / 180);
 }
@@ -48,19 +59,17 @@ export function useSolverResult(): SolverResult | null {
   const atmosphericOverride = useFieldStore((s) => s.atmosphericOverride);
   const windSpeedMph = useFieldStore((s) => s.windSpeedMph);
   const windClockPosition = useFieldStore((s) => s.windClockPosition);
+  const coldBoreApplyOffset = useFieldStore((s) => s.coldBoreApplyOffset);
 
   const [profile, setProfile] = useState<FieldProfile | null>(null);
+  const [coldEvents, setColdEvents] = useState<ColdBoreEventRow[]>([]);
 
-  // Reload profile whenever the active rifle changes.
-  // If activeRifleId is null, auto-select the first available rifle.
   useEffect(() => {
     let cancelled = false;
 
     async function loadProfile() {
       let rifleId = activeRifleId;
 
-      // Auto-select first rifle if none is active (e.g. on first launch before
-      // visiting Profiles tab — seed runs on the DB, but store hasn't been set yet).
       if (!rifleId) {
         const allRifles = await getRiflesWithActiveLoad();
         const first = allRifles[0];
@@ -71,12 +80,21 @@ export function useSolverResult(): SolverResult | null {
       }
 
       if (!rifleId) {
-        if (!cancelled) setProfile(null);
+        if (!cancelled) {
+          setProfile(null);
+          setColdEvents([]);
+        }
         return;
       }
 
-      const p = await getFieldProfile(rifleId);
-      if (!cancelled) setProfile(p);
+      const [p, events] = await Promise.all([
+        getFieldProfile(rifleId),
+        getColdBoreEvents(rifleId),
+      ]);
+      if (!cancelled) {
+        setProfile(p);
+        setColdEvents(events);
+      }
     }
 
     loadProfile();
@@ -89,49 +107,58 @@ export function useSolverResult(): SolverResult | null {
     if (!profile) return null;
 
     const atmosphere = atmosphericOverride ?? profile.atmosphericSnapshot;
+    const effective = buildEffectiveSolutionInputs(profile, atmosphere);
+    const trajectoryOutput = computeTrajectory(effective.trajectory);
 
-    const inputs: TrajectoryInputs = {
-      bullet: {
-        weightGrains: profile.load.weightGrains as any,
-        diameterInches: profile.load.diameterInches as any,
-        bc: profile.load.bc as any,
-        dragModel: profile.load.dragModel as 'G1' | 'G7',
-      },
-      muzzleVelocityFps: profile.load.muzzleVelocityFps as any,
-      scopeHeightInches: profile.zero.scopeHeightInches as any,
-      zeroRangeYards: profile.zero.zeroRangeYards as any,
-      atmosphere,
-    };
-
-    const trajectoryOutput = computeTrajectory(inputs);
-
-    // Solve at the exact requested range (linear interpolation between the
-    // solver's 25-yd rows — snapping to a row was up to 24 yd of range error).
-    // Beyond the computed table (bullet went subsonic/slow and integration
-    // stopped) fall back to the last available row.
     const row =
       solutionAtRange(trajectoryOutput.rows, rangeYards) ??
       trajectoryOutput.rows[trajectoryOutput.rows.length - 1];
 
     if (!row) return null;
 
-    // ── Wind hold ─────────────────────────────────────────────────────────────
-    // crosswind component (mph) based on clock position
     const crosswindMph = windSpeedMph * clockToWindFraction(windClockPosition);
-
-    // Lag-time wind hold from the solver (drift = Vw × (TOF − range/MV)).
-    // Positive holdMil = aim right (wind from the left).
-    const windHold = windHoldMils(
+    const windHoldBase = windHoldMils(
       crosswindMph,
       row.timeOfFlightSeconds,
       row.rangeYards,
-      profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'],
+      effective.effectiveMvFps as Parameters<typeof windHoldMils>[3],
     ) as number;
 
-    // ── Dial clicks ───────────────────────────────────────────────────────────
-    const clicksPerMrad = profile.scope.clicksPerMrad;
-    const dialClicks = Math.round(row.holdMils * clicksPerMrad);
+    const coldBore = predictColdBoreOffset(coldEvents, {
+      loadId: profile.load.id,
+      suppressorEnabled: profile.rifle.suppressorEnabled,
+    });
 
-    return { row, profile, windHoldMils: windHold, dialClicks };
-  }, [profile, rangeYards, atmosphericOverride, windSpeedMph, windClockPosition]);
+    const coldBoreApplied =
+      coldBoreApplyOffset && coldBore.canAutoApply && coldBore.sampleCount >= 3;
+
+    const elevHoldMils =
+      (row.holdMils as number) +
+      effective.suppressorElevShiftMils +
+      (coldBoreApplied ? coldBore.elevOffsetMils : 0);
+
+    const windHold = windHoldBase + effective.suppressorWindShiftMils;
+    const clicksPerMrad = profile.scope.clicksPerMrad;
+    const dialClicks = Math.round(elevHoldMils * clicksPerMrad);
+
+    return {
+      row,
+      profile,
+      windHoldMils: windHold,
+      elevHoldMils,
+      dialClicks,
+      effectiveMvFps: effective.effectiveMvFps,
+      suppressorDeltaMissing: effective.suppressorDeltaMissing,
+      coldBore,
+      coldBoreApplied,
+    };
+  }, [
+    profile,
+    coldEvents,
+    rangeYards,
+    atmosphericOverride,
+    windSpeedMph,
+    windClockPosition,
+    coldBoreApplyOffset,
+  ]);
 }

@@ -1,0 +1,157 @@
+---
+import Base from '../layouts/Base.astro';
+
+/** Snapshot from packages/solver harness (Aug 2026). Re-run `npm run test:solver` and update after solver changes. */
+const fixtures = [
+  {
+    id: 'g7-308-175smk-2600fps',
+    label: '.308 Win · 175gr SMK · G7 0.243 · 2600 fps',
+    truth: 'py-ballisticcalc (JBM-derived) G7 table',
+    at1000: { pathIn: -432.0, holdMil: 12.001, velFps: 1089, tolIn: 2.0 },
+    status: 'PASS',
+  },
+  {
+    id: 'g7-65creedmoor-140eldm-2710fps',
+    label: '6.5 Creedmoor · 140gr ELD-M · G7 · 2710 fps',
+    truth: 'Published trajectory table fixtures',
+    at1000: { pathIn: -317.6, holdMil: 8.823, velFps: 1485, tolIn: 2.5 },
+    status: 'PASS',
+  },
+  {
+    id: 'g7-7mm-prc-180eldm-2950fps',
+    label: '7mm PRC · 180gr ELD-M · G7 · 2950 fps',
+    truth: 'Published trajectory table fixtures',
+    at1000: { pathIn: -235.3, holdMil: 6.536, velFps: 1877, tolIn: 2.5 },
+    status: 'PASS',
+  },
+];
+
+const gate = 'PR blocked if any fixture exceeds 0.05 mil at 1000 yards (Claude.md) — current harness also enforces published inch tolerances per range.';
+---
+<Base
+  title="Solver Validation | RangeDOPE"
+  description="Public validation results for the RangeDOPE on-device ballistics solver against published trajectory fixtures."
+>
+<style>
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,60px);height:80px;background:rgba(8,8,8,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+  .brand{font-family:var(--font-sans);font-size:20px;font-weight:900;letter-spacing:.15em;color:#fff;font-style:italic;}
+  .brand span{color:var(--primary);}
+  main{max-width:860px;margin:0 auto;padding:140px clamp(20px,5vw,40px) 100px;}
+  .back{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;margin-bottom:48px;}
+  .back:hover{color:var(--primary);opacity:1;}
+  .spec-tag{display:inline-block;background:var(--primary);color:#fff;font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;padding:4px 10px;margin-bottom:20px;}
+  h1{font-family:var(--font-sans);font-size:clamp(36px,6vw,56px);font-weight:700;letter-spacing:-.02em;color:#fff;text-transform:uppercase;margin-bottom:20px;}
+  .lede{font-size:16px;color:#888;line-height:1.85;margin-bottom:32px;max-width:640px;}
+  .gate{border-left:4px solid var(--primary);background:var(--surface);padding:20px 24px;margin-bottom:48px;}
+  .gate-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.2em;color:var(--primary);text-transform:uppercase;margin-bottom:8px;}
+  .gate p{font-size:13px;font-family:var(--font-mono);color:#aaa;margin:0;line-height:1.7;}
+  h2{font-family:var(--font-sans);font-size:22px;font-weight:600;color:#fff;text-transform:uppercase;margin:48px 0 16px;border-left:4px solid var(--primary);padding-left:16px;}
+  table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;margin:16px 0 8px;}
+  th{text-align:left;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;font-size:9px;padding:10px 12px;border-bottom:1px solid var(--border);}
+  td{padding:14px 12px;border-bottom:1px solid var(--border);color:#ccc;vertical-align:top;}
+  .pass{color:#22C55E;font-weight:700;letter-spacing:.08em;}
+  .card{border:1px solid var(--border);background:rgba(18,18,18,.6);padding:24px;margin-bottom:16px;}
+  .card h3{font-family:var(--font-mono);font-size:13px;color:#fff;margin:0 0 8px;letter-spacing:.04em;}
+  .card .meta{font-size:11px;color:var(--dim);margin-bottom:16px;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .stat{border:1px solid var(--border);padding:12px;}
+  .stat-k{font-size:9px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:6px;}
+  .stat-v{font-size:16px;color:#fff;font-weight:700;}
+  .note{font-size:13px;color:#888;line-height:1.75;margin-top:40px;}
+  .note strong{color:#ccc;}
+  footer{border-top:1px solid var(--border);padding:32px clamp(20px,5vw,60px);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  footer a{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase;}
+  @media(max-width:640px){.stats{grid-template-columns:1fr 1fr;}}
+</style>
+
+<nav>
+  <a href="/" style="opacity:1;text-decoration:none;">
+    <span class="brand">RANGE<span>DOPE</span></span>
+  </a>
+  <a href="/" class="back" style="margin:0;">← Home</a>
+</nav>
+
+<main>
+  <a href="/" class="back">← Back to RangeDOPE</a>
+  <span class="spec-tag">Public Trust Signal</span>
+  <h1>Solver validation</h1>
+  <p class="lede">
+    Every release runs an on-device modified point-mass solver against published trajectory
+    fixtures. We publish the results here so you can see what we claim — and what we do not.
+  </p>
+
+  <div class="gate">
+    <div class="gate-label">CI gate</div>
+    <p>{gate}</p>
+  </div>
+
+  <h2>What is implemented today</h2>
+  <p class="lede" style="margin-bottom:0;">
+    G1/G7 drag tables · atmosphere (temp, pressure, humidity) · zeroing · lag-time wind drift ·
+    trajectory tables to 1800 yd. <strong style="color:#ccc;">Not yet in the solver:</strong>
+    Coriolis, spin drift, aerodynamic jump, cant, multi-segment BC. Those land when fixtures pass.
+  </p>
+
+  <h2>Current harness snapshot</h2>
+  {fixtures.map((f) => (
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;">
+        <h3>{f.label}</h3>
+        <span class="pass">{f.status}</span>
+      </div>
+      <div class="meta">Fixture <code>{f.id}</code> · Truth: {f.truth}</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-k">1000 yd path</div>
+          <div class="stat-v">{f.at1000.pathIn}"</div>
+        </div>
+        <div class="stat">
+          <div class="stat-k">Hold</div>
+          <div class="stat-v">{f.at1000.holdMil} mil</div>
+        </div>
+        <div class="stat">
+          <div class="stat-k">Velocity</div>
+          <div class="stat-v">{f.at1000.velFps} fps</div>
+        </div>
+        <div class="stat">
+          <div class="stat-k">Tol @ 1000</div>
+          <div class="stat-v">±{f.at1000.tolIn}"</div>
+        </div>
+      </div>
+    </div>
+  ))}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Fixture</th>
+        <th>1000 yd path</th>
+        <th>Tolerance</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {fixtures.map((f) => (
+        <tr>
+          <td>{f.id}</td>
+          <td>{f.at1000.pathIn}"</td>
+          <td>±{f.at1000.tolIn}"</td>
+          <td class="pass">{f.status}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <p class="note">
+    <strong>How to reproduce:</strong> clone the repo, run <code>npm run test:solver</code>.
+    Fixtures live in <code>packages/solver/__fixtures__/</code>. Values above are the computed
+    solver output at harness green (Aug 2026). Path inches at 1000 yd match fixture expected
+    values within published tolerances — not a marketing chart.
+  </p>
+</main>
+
+<footer>
+  <a href="/privacy">Privacy</a>
+  <a href="/">getrangedope.com</a>
+</footer>
+</Base>

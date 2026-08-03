@@ -1,13 +1,7 @@
 /**
  * Open-Meteo weather client — direct API call, no backend.
  *
- * Fetches surface atmospheric conditions at a given location.
- * Used to auto-fill AtmoInput and cache conditions for the wind-risk envelope.
- *
- * API: https://open-meteo.com/en/docs (free, no key required)
- * On failure, falls back to ICAO standard atmosphere (marked 'fallback-icao'
- * so the UI can show "STANDARD"). An api.weather.gov fallback is planned but
- * NOT yet implemented.
+ * Primary: Open-Meteo. Fallback: api.weather.gov (US). Last resort: ICAO standard.
  *
  * Results are cached in-memory with a timestamp; callers check `ageMinutes`
  * before deciding whether to show a "data is stale" warning.
@@ -16,13 +10,15 @@ import type { AtmosphericConditions } from '@aim/solver';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export type WeatherSource = 'open-meteo' | 'weather-gov' | 'fallback-icao';
+
 export type WeatherResult = {
   conditions: AtmosphericConditions;
   /** UTC ISO timestamp of when the data was fetched. */
   fetchedAt: string;
   /** How old the data is in minutes at time of reading. */
   readonly ageMinutes: number;
-  source: 'open-meteo' | 'fallback-icao';
+  source: WeatherSource;
 };
 
 type WindsAloftLevel = {
@@ -46,7 +42,7 @@ let surfaceCache: (WeatherResult & { lat: number; lng: number }) | null = null;
 let aloftCache: (WindsAloftResult & { lat: number; lng: number }) | null = null;
 
 const CACHE_RADIUS_DEG = 0.2;   // ~14 miles — same cache valid in this radius
-const STALENESS_MINUTES = 60;    // show "stale" warning after 1 hour
+export const WEATHER_STALE_MINUTES = 60;
 
 function ageMinutes(fetchedAt: string): number {
   return (Date.now() - new Date(fetchedAt).getTime()) / 60_000;
@@ -57,21 +53,115 @@ function locationMatch(cache: { lat: number; lng: number }, lat: number, lng: nu
          Math.abs(cache.lng - lng) < CACHE_RADIUS_DEG;
 }
 
+function icaoFallback(): WeatherResult {
+  const fetchedAt = new Date().toISOString();
+  return {
+    conditions: {
+      temperatureFahrenheit: 59 as AtmosphericConditions['temperatureFahrenheit'],
+      pressureInHg: 29.921 as AtmosphericConditions['pressureInHg'],
+      relativeHumidityPct: 50,
+    },
+    fetchedAt,
+    get ageMinutes() { return ageMinutes(fetchedAt); },
+    source: 'fallback-icao',
+  };
+}
+
+// ─── NOAA api.weather.gov surface fallback ───────────────────────────────────
+
+/**
+ * US-only observation from the nearest NWS station.
+ * Requires a descriptive User-Agent per weather.gov API policy.
+ */
+async function fetchWeatherGovSurface(
+  lat: number,
+  lng: number,
+): Promise<WeatherResult> {
+  const headers = {
+    Accept: 'application/geo+json',
+    'User-Agent': 'RangeDOPE/1.0 (https://getrangedope.com; ballistics@getrangedope.com)',
+  };
+
+  const pointsRes = await fetch(
+    `https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
+    { headers },
+  );
+  if (!pointsRes.ok) throw new Error(`weather.gov points HTTP ${pointsRes.status}`);
+
+  const pointsJson = await pointsRes.json() as {
+    properties?: { observationStations?: string };
+  };
+  const stationsUrl = pointsJson.properties?.observationStations;
+  if (!stationsUrl) throw new Error('weather.gov: no observationStations');
+
+  const stationsRes = await fetch(stationsUrl, { headers });
+  if (!stationsRes.ok) throw new Error(`weather.gov stations HTTP ${stationsRes.status}`);
+
+  const stationsJson = await stationsRes.json() as {
+    features?: Array<{ id?: string; properties?: { stationIdentifier?: string } }>;
+  };
+  const stationId =
+    stationsJson.features?.[0]?.properties?.stationIdentifier ??
+    stationsJson.features?.[0]?.id?.split('/').pop();
+  if (!stationId) throw new Error('weather.gov: empty station list');
+
+  const obsRes = await fetch(
+    `https://api.weather.gov/stations/${stationId}/observations/latest`,
+    { headers },
+  );
+  if (!obsRes.ok) throw new Error(`weather.gov obs HTTP ${obsRes.status}`);
+
+  const obs = await obsRes.json() as {
+    properties?: {
+      temperature?: { value: number | null; unitCode?: string };
+      barometricPressure?: { value: number | null };
+      seaLevelPressure?: { value: number | null };
+      relativeHumidity?: { value: number | null };
+      timestamp?: string;
+    };
+  };
+  const p = obs.properties;
+  if (!p) throw new Error('weather.gov: empty observation');
+
+  // temperature.value is °C when unitCode is wmoUnit:degC
+  const tempC = p.temperature?.value;
+  if (tempC == null) throw new Error('weather.gov: missing temperature');
+  const temperatureFahrenheit = (tempC * 9) / 5 + 32;
+
+  // Pressure in Pa → inHg
+  const pressurePa = p.barometricPressure?.value ?? p.seaLevelPressure?.value;
+  if (pressurePa == null) throw new Error('weather.gov: missing pressure');
+  const pressureInHg = pressurePa / 3386.39;
+
+  const relativeHumidityPct = Math.round(p.relativeHumidity?.value ?? 50);
+
+  const fetchedAt = p.timestamp ?? new Date().toISOString();
+  return {
+    conditions: {
+      temperatureFahrenheit: temperatureFahrenheit as AtmosphericConditions['temperatureFahrenheit'],
+      pressureInHg: pressureInHg as AtmosphericConditions['pressureInHg'],
+      relativeHumidityPct,
+    },
+    fetchedAt,
+    get ageMinutes() { return ageMinutes(fetchedAt); },
+    source: 'weather-gov',
+  };
+}
+
 // ─── Open-Meteo surface fetch ─────────────────────────────────────────────────
 
 /**
- * Fetch surface atmospheric conditions from Open-Meteo.
- * Returns cached result if location matches and data is < STALENESS_MINUTES old.
+ * Fetch surface atmospheric conditions.
+ * Order: cache → Open-Meteo → weather.gov → ICAO standard.
  */
 export async function fetchSurfaceWeather(
   lat: number,
   lng: number,
 ): Promise<WeatherResult> {
-  // Return cache if fresh and nearby.
   if (
     surfaceCache &&
     locationMatch(surfaceCache, lat, lng) &&
-    ageMinutes(surfaceCache.fetchedAt) < STALENESS_MINUTES
+    ageMinutes(surfaceCache.fetchedAt) < WEATHER_STALE_MINUTES
   ) {
     return { ...surfaceCache, ageMinutes: ageMinutes(surfaceCache.fetchedAt) };
   }
@@ -90,18 +180,17 @@ export async function fetchSurfaceWeather(
     const json = await res.json() as {
       current: {
         temperature_2m: number;
-        surface_pressure: number;   // hPa
+        surface_pressure: number;
         relative_humidity_2m: number;
       };
     };
 
     const c = json.current;
-    // Convert hPa → inHg (1 hPa = 0.02953 inHg)
     const pressureInHg = c.surface_pressure * 0.02953;
 
     const conditions: AtmosphericConditions = {
-      temperatureFahrenheit: c.temperature_2m as any,
-      pressureInHg: pressureInHg as any,
+      temperatureFahrenheit: c.temperature_2m as AtmosphericConditions['temperatureFahrenheit'],
+      pressureInHg: pressureInHg as AtmosphericConditions['pressureInHg'],
       relativeHumidityPct: c.relative_humidity_2m,
     };
 
@@ -115,21 +204,16 @@ export async function fetchSurfaceWeather(
 
     surfaceCache = { ...result, lat, lng };
     return result;
-  } catch (err) {
-    console.warn('[weather] Open-Meteo failed, returning ICAO standard:', err);
-    // Graceful degradation: return ICAO standard atmosphere so the solver
-    // can still run — the user will see "STANDARD" in AtmoInput.
-    const fetchedAt = new Date().toISOString();
-    return {
-      conditions: {
-        temperatureFahrenheit: 59 as any,
-        pressureInHg: 29.921 as any,
-        relativeHumidityPct: 50,
-      },
-      fetchedAt,
-      get ageMinutes() { return ageMinutes(fetchedAt); },
-      source: 'fallback-icao',
-    };
+  } catch (primaryErr) {
+    console.warn('[weather] Open-Meteo failed, trying weather.gov:', primaryErr);
+    try {
+      const gov = await fetchWeatherGovSurface(lat, lng);
+      surfaceCache = { ...gov, lat, lng };
+      return gov;
+    } catch (govErr) {
+      console.warn('[weather] weather.gov failed, ICAO standard:', govErr);
+      return icaoFallback();
+    }
   }
 }
 
@@ -147,7 +231,7 @@ export async function fetchWindsAloft(
   if (
     aloftCache &&
     locationMatch(aloftCache, lat, lng) &&
-    ageMinutes(aloftCache.fetchedAt) < STALENESS_MINUTES
+    ageMinutes(aloftCache.fetchedAt) < WEATHER_STALE_MINUTES
   ) {
     return { ...aloftCache, ageMinutes: ageMinutes(aloftCache.fetchedAt) };
   }

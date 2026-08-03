@@ -174,13 +174,13 @@ import Base from '../layouts/Base.astro';
       <span class="feat-card-label">First Principles</span>
       <span class="feat-icon material-symbols-outlined">target</span>
       <h3 class="feat-title">Ballistic Precision</h3>
-      <p class="feat-desc">Point-mass solver with Coriolis, spin drift, aerodynamic jump, and incline correction. G1/G7 BC. Real physics — not a lookup table.</p>
+      <p class="feat-desc">Modified point-mass solver with G1/G7 drag, atmosphere, lag-time wind, and zeroing. Validated against published trajectory tables. Advanced drift corrections (Coriolis, spin, AJ) ship as they clear the harness.</p>
     </div>
     <div class="feat-card">
       <span class="feat-card-label">Offline Ops</span>
       <span class="feat-icon material-symbols-outlined">layers</span>
       <h3 class="feat-title">Terrain Mapping</h3>
-      <p class="feat-desc">USGS TOPO, LiDAR relief, 3D composite, satellite, and vector — all cached on device. ESRI roads overlay. Works without cell service.</p>
+      <p class="feat-desc">USGS TOPO, LiDAR relief, 3D composite, satellite, and vector styles. Download hunt areas for offline use. ESRI roads overlay where available.</p>
     </div>
     <div class="feat-card">
       <span class="feat-card-label">Waypoints</span>
@@ -192,7 +192,7 @@ import Base from '../layouts/Base.astro';
       <span class="feat-card-label">Ethics Layer</span>
       <span class="feat-icon material-symbols-outlined">air</span>
       <h3 class="feat-title">Hunter WEZ</h3>
-      <p class="feat-desc">Hit probability by vital zone size, wind sigma, and minimum impact velocity. A traffic-light ethics layer for every shot.</p>
+      <p class="feat-desc">Estimated vital-zone hit probability from dispersion, wind sigma, and impact energy. A decision aid — you remain responsible for every shot.</p>
     </div>
   </div>
 </section>
@@ -241,7 +241,7 @@ import Base from '../layouts/Base.astro';
       <p>The BLM Surface Management Agency overlay on every map style — the same federal data used by onX Hunt, rendered free directly from government tile servers. No subscription required.</p>
       <ul class="own-checks">
         <li><span class="check material-symbols-outlined">check_circle</span>Public vs. private at a glance</li>
-        <li><span class="check material-symbols-outlined">check_circle</span>Works fully offline after caching</li>
+        <li><span class="check material-symbols-outlined">check_circle</span>Download areas before you leave cell service</li>
         <li><span class="check material-symbols-outlined">check_circle</span>Free — no onX subscription needed</li>
       </ul>
     </div>
@@ -275,6 +275,7 @@ import Base from '../layouts/Base.astro';
       </div>
       <div class="foot-col">
         <h4>Support</h4>
+        <a href="/validation">Solver Validation</a>
         <a href="https://apps.apple.com/app/id6765543307" target="_blank" rel="noopener">App Store</a>
         <a href="mailto:mike@techridgeseo.com">Contact Ops</a>
       </div>

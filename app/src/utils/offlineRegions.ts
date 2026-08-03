@@ -226,3 +226,34 @@ export async function downloadRegion(
 
   return completed;
 }
+
+/**
+ * MapLibre file:// tile template for a downloaded region + source.
+ * On-disk: <documentDirectory>/tiles/<regionId>/<source>/{z}/{x}/{y}.png
+ */
+export function localTileUrlTemplate(
+  regionId: string,
+  source: TileSource,
+): string | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const FS = require('expo-file-system') as Record<string, unknown>;
+    const docDir = FS.documentDirectory as string | undefined;
+    if (!docDir) return null;
+    const base = docDir.endsWith('/') ? docDir.slice(0, -1) : docDir;
+    return `${base}/tiles/${regionId}/${source}/{z}/{x}/{y}.png`;
+  } catch {
+    return null;
+  }
+}
+
+/** Newest completed offline region that includes the given source. */
+export async function bestOfflineRegionForSource(
+  source: TileSource,
+): Promise<OfflineRegion | null> {
+  const regions = await loadRegions();
+  const candidates = regions
+    .filter((r) => r.downloadedAt && r.tilesDownloaded > 0 && r.sources.includes(source))
+    .sort((a, b) => (b.downloadedAt ?? '').localeCompare(a.downloadedAt ?? ''));
+  return candidates[0] ?? null;
+}

@@ -34,9 +34,9 @@ const LIGHT_COLORS: Record<WEZTrafficLight, string> = {
 };
 
 const LIGHT_LABELS: Record<WEZTrafficLight, string> = {
-  clear:    'CLEAR',
+  clear:    'FAVORABLE',
   marginal: 'MARGINAL',
-  hold:     'HOLD',
+  hold:     'LOW CONF.',
 };
 
 const FONT = 'SpaceMono-Regular';
@@ -128,8 +128,11 @@ export function HunterWEZCard({ result, theme, windSigmaMil = 0.2 }: Props) {
           </View>
 
           {/* Reason text */}
-          <Text style={[styles.reason, { color: theme.dim }]} numberOfLines={3}>
+          <Text style={[styles.reason, { color: theme.dim }]} numberOfLines={4}>
             {wez.reason}
+          </Text>
+          <Text style={[styles.hint, { color: theme.dim }]}>
+            Estimated probability only. You are responsible for every shot decision.
           </Text>
 
           {/* Species selector row */}

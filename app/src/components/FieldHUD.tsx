@@ -95,6 +95,9 @@ export function FieldHUD({ result, theme }: Props) {
   const cycleDisplayMode = useFieldStore((s) => s.cycleDisplayMode);
   const holdUnit = useFieldStore((s) => s.holdUnit);
   const toggleHoldUnit = useFieldStore((s) => s.toggleHoldUnit);
+  const wezEnabled = useFieldStore((s) => s.wezEnabled);
+  const coldBoreApplyOffset = useFieldStore((s) => s.coldBoreApplyOffset);
+  const setColdBoreApplyOffset = useFieldStore((s) => s.setColdBoreApplyOffset);
   const { width } = useWindowDimensions();
   const isWide = width > 400;
 
@@ -117,19 +120,20 @@ export function FieldHUD({ result, theme }: Props) {
     );
   }
 
-  const { row, profile, windHoldMils, dialClicks } = result;
+  const { row, profile, windHoldMils, dialClicks, elevHoldMils, suppressorDeltaMissing, coldBore, coldBoreApplied } = result;
 
   const profileLine = [
     profile.rifle.caliber,
     `${fmtInt(profile.load.weightGrains)}gr ${profile.load.bulletName}`,
     `${profile.zero.zeroRangeYards}yd zero`,
-  ].join(' · ');
+    profile.rifle.suppressorEnabled ? 'SUP' : null,
+  ].filter(Boolean).join(' · ');
 
   // Convert hold values based on selected unit.
   const unitFactor = holdUnit === 'MOA' ? MIL_TO_MOA : 1;
   const holdDecimals = holdUnit === 'MOA' ? 1 : 2;
 
-  const elevHoldRaw = (row.holdMils as number) * unitFactor;
+  const elevHoldRaw = elevHoldMils * unitFactor;
   const windHoldRaw = windHoldMils * unitFactor;
 
   const elevHoldStr = fmt(elevHoldRaw, holdDecimals);
@@ -164,6 +168,31 @@ export function FieldHUD({ result, theme }: Props) {
       </Pressable>
 
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
+      {(profile.rifle.suppressorEnabled || (coldBore && coldBore.sampleCount > 0)) && (
+        <View style={styles.badgeRow}>
+          {profile.rifle.suppressorEnabled && (
+            <Text style={[styles.badge, { color: suppressorDeltaMissing ? '#F59E0B' : theme.primary, borderColor: suppressorDeltaMissing ? '#F59E0B' : theme.primary }]}>
+              {suppressorDeltaMissing ? 'SUP · MEASURE MV' : 'SUP'}
+            </Text>
+          )}
+          {coldBore && coldBore.sampleCount > 0 && (
+            <Pressable
+              onPress={() => {
+                if (coldBore.canAutoApply) setColdBoreApplyOffset(!coldBoreApplyOffset);
+              }}
+              style={[styles.badge, { borderColor: coldBoreApplied ? theme.primary : theme.border }]}
+              accessibilityLabel="Toggle applying cold-bore offset to dial"
+            >
+              <Text style={[styles.badgeText, { color: theme.dim }]}>
+                COLD {coldBore.elevOffsetMils >= 0 ? '+' : ''}
+                {coldBore.elevOffsetMils.toFixed(2)} mil · {coldBore.confidence.toUpperCase()}
+                {coldBore.canAutoApply ? (coldBoreApplied ? ' · ON' : ' · OFF') : ''}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
 
       {/* Primary outputs row — DIAL and ELEV HOLD */}
       <View style={styles.primaryRow}>
@@ -237,26 +266,55 @@ export function FieldHUD({ result, theme }: Props) {
 
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
-      {/* Hunter WEZ traffic light.
+      {/* Hunter WEZ traffic light — off by default in restricted jurisdictions.
           Wind uncertainty: convert the wind-risk σ (mph, from winds-aloft
           variance) to an angular σ at this range via the same lag-time
           formula used for the wind hold, then RSS with a 0.2 mil baseline
           aiming/ranging uncertainty floor. */}
-      <HunterWEZCard
-        result={result}
-        theme={theme}
-        windSigmaMil={Math.sqrt(
-          0.2 ** 2 +
-            (windRisk
-              ? (solverWindHold(
-                  windRisk.sigmaWindMph,
-                  row.timeOfFlightSeconds,
-                  row.rangeYards,
-                  profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'],
-                ) as number)
-              : 0) ** 2,
-        )}
-      />
+      {wezEnabled && (
+        <HunterWEZCard
+          result={result}
+          theme={theme}
+          windSigmaMil={Math.sqrt(
+            0.2 ** 2 +
+              (windRisk
+                ? (solverWindHold(
+                    windRisk.sigmaWindMph,
+                    row.timeOfFlightSeconds,
+                    row.rangeYards,
+                    result.effectiveMvFps as TrajectoryInputs['muzzleVelocityFps'],
+                  ) as number)
+                : 0) ** 2,
+          )}
+        />
+      )}
+
+      <Pressable
+        onPress={async () => {
+          try {
+            const { insertShotLog } = await import('../db/queries');
+            const Crypto = await import('expo-crypto');
+            await insertShotLog({
+              id: Crypto.randomUUID(),
+              rifleId: profile.rifle.id,
+              loadId: profile.load.id,
+              rangeYards: row.rangeYards as number,
+              elevHoldMils,
+              windHoldMils,
+              impactOffsetMilsElev: null,
+              impactOffsetMilsWind: null,
+              suppressorEnabled: profile.rifle.suppressorEnabled,
+              notes: null,
+            });
+          } catch (e) {
+            console.warn('[FieldHUD] shot log failed', e);
+          }
+        }}
+        style={[styles.logShotBtn, { borderColor: theme.border }]}
+        accessibilityLabel="Log this solution as a shot for later truing"
+      >
+        <Text style={[styles.logShotText, { color: theme.dim }]}>LOG SHOT</Text>
+      </Pressable>
     </View>
   );
 }
@@ -267,6 +325,41 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     gap: 0,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  badge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontFamily: FONT,
+    fontSize: 9,
+    letterSpacing: 1,
+  },
+  badgeText: {
+    fontFamily: FONT,
+    fontSize: 9,
+    letterSpacing: 0.8,
+  },
+  logShotBtn: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  logShotText: {
+    fontFamily: FONT,
+    fontSize: 10,
+    letterSpacing: 1.5,
   },
   profileLine: {
     fontFamily: FONT,

@@ -27,7 +27,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFieldStore } from '../store/fieldStore';
 import { useSolverResult } from '../hooks/useSolverResult';
 import { ICAO_STANDARD_ATMOSPHERE } from '@aim/solver';
-import { fetchSurfaceWeather } from '../utils/weather';
+import { fetchSurfaceWeather, WEATHER_STALE_MINUTES } from '../utils/weather';
+import type { WeatherSource } from '../utils/weather';
 import type { Theme } from '../theme';
 
 interface Props {
@@ -86,6 +87,7 @@ export function AtmoInput({ theme }: Props) {
   const [draftHumidity, setDraftHumidity] = useState('');
   const [fetchingWeather, setFetchingWeather] = useState(false);
   const [weatherAge, setWeatherAge] = useState<number | null>(null);
+  const [weatherSource, setWeatherSource] = useState<WeatherSource | null>(null);
 
   // Use override if set, otherwise profile snapshot, otherwise ICAO standard.
   const current = override ?? result?.profile.atmosphericSnapshot ?? ICAO_STANDARD_ATMOSPHERE;
@@ -114,6 +116,7 @@ export function AtmoInput({ theme }: Props) {
       setDraftPressure(String((wx.conditions.pressureInHg as number).toFixed(2)));
       setDraftHumidity(String(Math.round(wx.conditions.relativeHumidityPct)));
       setWeatherAge(Math.round(wx.ageMinutes));
+      setWeatherSource(wx.source);
     } catch (err) {
       console.warn('[AtmoInput] Weather fetch failed:', err);
     } finally {
@@ -139,6 +142,7 @@ export function AtmoInput({ theme }: Props) {
   function reset() {
     setAtmosphericOverride(null);
     setWeatherAge(null);
+    setWeatherSource(null);
     setVisible(false);
   }
 
@@ -217,9 +221,25 @@ export function AtmoInput({ theme }: Props) {
                   {fetchingWeather ? 'FETCHING…' : 'FETCH LIVE WEATHER'}
                 </Text>
               </Pressable>
-              {weatherAge !== null && (
-                <Text style={[styles.weatherAge, { color: theme.dim }]}>
-                  {weatherAge < 1 ? 'Data is fresh' : `Data is ${weatherAge} min old`} · Open-Meteo
+              {weatherAge !== null && weatherSource && (
+                <Text
+                  style={[
+                    styles.weatherAge,
+                    {
+                      color:
+                        weatherAge >= WEATHER_STALE_MINUTES || weatherSource === 'fallback-icao'
+                          ? '#F59E0B'
+                          : theme.dim,
+                    },
+                  ]}
+                >
+                  {weatherSource === 'fallback-icao'
+                    ? 'Using ICAO standard — live fetch failed'
+                    : weatherAge >= WEATHER_STALE_MINUTES
+                      ? `Stale cache · ${weatherAge} min old · ${weatherSource}`
+                      : weatherAge < 1
+                        ? `Fresh · ${weatherSource}`
+                        : `${weatherAge} min old · ${weatherSource}`}
                 </Text>
               )}
 

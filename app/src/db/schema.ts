@@ -56,6 +56,15 @@ export const loads = sqliteTable('loads', {
    * selection. Purely informational — never read by the solver.
    */
   libraryBulletId: text('library_bullet_id'),
+  /**
+   * Measured MV change with suppressor attached: suppressed − bare (usually negative).
+   * Null = never measured — solver must not invent a brand default.
+   */
+  suppressorMvDeltaFps: real('suppressor_mv_delta_fps'),
+  /** Optional POI/zero elev shift in mils when suppressor is attached. */
+  suppressorZeroShiftMilsElev: real('suppressor_zero_shift_mils_elev'),
+  /** Optional POI/zero wind shift in mils when suppressor is attached. */
+  suppressorZeroShiftMilsWind: real('suppressor_zero_shift_mils_wind'),
   notes: text('notes'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
@@ -106,10 +115,44 @@ export const coldBoreEvents = sqliteTable('cold_bore_events', {
   rifleId: text('rifle_id')
     .notNull()
     .references(() => rifles.id, { onDelete: 'cascade' }),
+  /** Load at time of event — null for legacy rows; prefer matching active load. */
+  loadId: text('load_id'),
+  /** Suppressor state when the cold shot was fired — bucket series separately. */
+  suppressorEnabled: integer('suppressor_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   date: text('date').notNull(),
   tempFahrenheit: real('temp_fahrenheit'),
   /** First-shot POI offset from zero in milliradians (positive = high). */
   firstShotOffsetMrad: real('first_shot_offset_mrad').notNull(),
+  notes: text('notes'),
+  createdAt: text('created_at').notNull(),
+});
+
+// ─── shotLogs ────────────────────────────────────────────────────────────────
+
+/**
+ * Field / range shot log for truing feedback. Hunter-entered; never leaves device
+ * without explicit export.
+ */
+export const shotLogs = sqliteTable('shot_logs', {
+  id: text('id').primaryKey(),
+  rifleId: text('rifle_id')
+    .notNull()
+    .references(() => rifles.id, { onDelete: 'cascade' }),
+  loadId: text('load_id')
+    .notNull()
+    .references(() => loads.id, { onDelete: 'cascade' }),
+  rangeYards: real('range_yards').notNull(),
+  /** Solution dialed/held at shot time (elev mils). */
+  elevHoldMils: real('elev_hold_mils').notNull(),
+  windHoldMils: real('wind_hold_mils'),
+  /** Observed impact vs aim — positive elev = high. */
+  impactOffsetMilsElev: real('impact_offset_mils_elev'),
+  impactOffsetMilsWind: real('impact_offset_mils_wind'),
+  suppressorEnabled: integer('suppressor_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   notes: text('notes'),
   createdAt: text('created_at').notNull(),
 });
@@ -142,4 +185,9 @@ export const coldBoreEventsRelations = relations(coldBoreEvents, ({ one }) => ({
     fields: [coldBoreEvents.rifleId],
     references: [rifles.id],
   }),
+}));
+
+export const shotLogsRelations = relations(shotLogs, ({ one }) => ({
+  rifle: one(rifles, { fields: [shotLogs.rifleId], references: [rifles.id] }),
+  load: one(loads, { fields: [shotLogs.loadId], references: [loads.id] }),
 }));

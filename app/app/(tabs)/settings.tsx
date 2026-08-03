@@ -28,13 +28,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useTheme } from '../../src/theme';
 import { useSolverResult } from '../../src/hooks/useSolverResult';
-import { getColdBoreEvents } from '../../src/db/queries';
+import { getColdBoreEvents, upsertRifle, upsertLoad, upsertScope, upsertZero } from '../../src/db/queries';
 import { exportBackup, importBackup, getLastBackupMeta } from '../../src/utils/backup';
 import type { BackupMeta } from '../../src/utils/backup';
 import { loadRegions } from '../../src/utils/offlineRegions';
 import type { OfflineRegion } from '../../src/utils/offlineRegions';
 import { OfflineRegionPicker } from '../../src/components/OfflineRegionPicker';
-import { useProGate, PaywallScreen } from '../../src/components/PaywallScreen';
+import { useProGate } from '../../src/components/PaywallScreen';
+import {
+  importStrelokCSV,
+  importHornadyJSON,
+  insertImportedProfiles,
+} from '../../src/utils/importers';
+import * as DocumentPicker from 'expo-document-picker';
+import * as Crypto from 'expo-crypto';
+import { WEZ_ENABLED_BY_DEFAULT, deviceRegionCode } from '../../src/lib/jurisdiction';
+
+// Lazy FileSystem read — same pattern as backup.ts (strict TS avoids expo-file-system src).
+type AnyRecord = Record<string, unknown>;
+async function readPickedText(uri: string): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const FS = require('expo-file-system') as AnyRecord;
+  return (FS.readAsStringAsync as (u: string) => Promise<string>)(uri);
+}
 
 const FONT = 'SpaceMono-Regular';
 
@@ -83,6 +99,8 @@ export default function SettingsScreen() {
   const cycleDisplayMode = useFieldStore((s) => s.cycleDisplayMode);
   const holdUnit = useFieldStore((s) => s.holdUnit);
   const toggleHoldUnit = useFieldStore((s) => s.toggleHoldUnit);
+  const wezEnabled = useFieldStore((s) => s.wezEnabled);
+  const setWezEnabled = useFieldStore((s) => s.setWezEnabled);
   const activeRifleId = useFieldStore((s) => s.activeRifleId);
   const theme = useTheme(displayMode);
   const result = useSolverResult();
@@ -90,6 +108,7 @@ export default function SettingsScreen() {
   const [coldBoreToday, setColdBoreToday] = useState(false);
   const [backupMeta, setBackupMeta] = useState<BackupMeta | null>(null);
   const [backupWorking, setBackupWorking] = useState(false);
+  const [importWorking, setImportWorking] = useState(false);
   const [offlineRegions, setOfflineRegions] = useState<OfflineRegion[]>([]);
   const [offlinePickerVisible, setOfflinePickerVisible] = useState(false);
 
@@ -132,6 +151,76 @@ export default function SettingsScreen() {
       Alert.alert('Import failed', String(e));
     } finally {
       setBackupWorking(false);
+    }
+  }
+
+  async function handleStrelokImport() {
+    if (!isPro) { showPaywall('Importers'); return; }
+    setImportWorking(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      const text = await readPickedText(picked.assets[0].uri);
+      const profiles = importStrelokCSV(text);
+      if (profiles.length === 0) {
+        Alert.alert('No profiles found', 'Could not parse any rifle profiles from that CSV.');
+        return;
+      }
+      const count = await insertImportedProfiles(profiles, {
+        upsertRifleFn: upsertRifle,
+        upsertLoadFn: upsertLoad,
+        upsertScopeFn: upsertScope,
+        upsertZeroFn: upsertZero,
+        randomUUID: () => Crypto.randomUUID(),
+        now: () => new Date().toISOString(),
+      });
+      Alert.alert(
+        'Strelok import complete',
+        `Imported ${count} of ${profiles.length} profile(s). Review twist rate and barrel length on each rifle.`,
+      );
+    } catch (e) {
+      Alert.alert('Strelok import failed', String(e));
+    } finally {
+      setImportWorking(false);
+    }
+  }
+
+  async function handleHornadyImport() {
+    if (!isPro) { showPaywall('Importers'); return; }
+    setImportWorking(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['application/json', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      const text = await readPickedText(picked.assets[0].uri);
+      const profile = importHornadyJSON(text);
+      if (!profile.bc || !profile.muzzleVelocityFps || !profile.weightGrains) {
+        Alert.alert('Invalid Hornady export', 'Missing BC, muzzle velocity, or bullet weight.');
+        return;
+      }
+      const count = await insertImportedProfiles([profile], {
+        upsertRifleFn: upsertRifle,
+        upsertLoadFn: upsertLoad,
+        upsertScopeFn: upsertScope,
+        upsertZeroFn: upsertZero,
+        randomUUID: () => Crypto.randomUUID(),
+        now: () => new Date().toISOString(),
+      });
+      Alert.alert(
+        'Hornady import complete',
+        count > 0
+          ? `Imported “${profile.name}”. Review twist rate and barrel length before field use.`
+          : 'Import failed — check the file and try again.',
+      );
+    } catch (e) {
+      Alert.alert('Hornady import failed', String(e));
+    } finally {
+      setImportWorking(false);
     }
   }
 
@@ -270,6 +359,25 @@ export default function SettingsScreen() {
               <Ionicons name="swap-horizontal-outline" size={16} color={theme.dim} />
             </View>
           </Pressable>
+
+          <Pressable
+            style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: theme.border }]}
+            onPress={() => setWezEnabled(!wezEnabled)}
+            accessibilityLabel="Toggle Hunter WEZ decision aid"
+          >
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[styles.settingLabel, { color: theme.label }]}>Hunter WEZ</Text>
+              <Text style={[styles.checkDetail, { color: theme.dim }]}>
+                Estimated hit probability aid · region {deviceRegionCode()}
+                {!WEZ_ENABLED_BY_DEFAULT ? ' · off by default here' : ''}
+              </Text>
+            </View>
+            <View style={styles.settingRight}>
+              <Text style={[styles.settingValue, { color: theme.primary }]}>
+                {wezEnabled ? 'ON' : 'OFF'}
+              </Text>
+            </View>
+          </Pressable>
         </View>
 
         {/* Version */}
@@ -321,12 +429,15 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { color: theme.dim }]}>IMPORT FROM OTHER APPS</Text>
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Pressable
-            onPress={handleImport}
-            disabled={backupWorking}
+            onPress={handleStrelokImport}
+            disabled={importWorking || backupWorking}
             style={styles.settingRow}
             accessibilityLabel="Import Strelok Pro CSV profile"
           >
-            <Ionicons name="document-text-outline" size={18} color={theme.label} />
+            {importWorking
+              ? <ActivityIndicator size="small" color={theme.primary} />
+              : <Ionicons name="document-text-outline" size={18} color={theme.label} />
+            }
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[styles.settingLabel, { color: theme.label }]}>Strelok Pro · CSV</Text>
               <Text style={[styles.checkDetail, { color: theme.dim }]}>Pick a Strelok Pro export file</Text>
@@ -334,8 +445,8 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={16} color={theme.dim} />
           </Pressable>
           <Pressable
-            onPress={handleImport}
-            disabled={backupWorking}
+            onPress={handleHornadyImport}
+            disabled={importWorking || backupWorking}
             style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: theme.border }]}
             accessibilityLabel="Import Hornady 4DOF JSON profile"
           >

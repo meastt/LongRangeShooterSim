@@ -4,7 +4,7 @@
  */
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from './client';
-import { rifles, loads, scopes, zeros, coldBoreEvents } from './schema';
+import { rifles, loads, scopes, zeros, coldBoreEvents, shotLogs } from './schema';
 import type {
   AtmosphericConditions,
 } from '@aim/solver';
@@ -16,6 +16,7 @@ export type LoadRow = typeof loads.$inferSelect;
 export type ScopeRow = typeof scopes.$inferSelect;
 export type ZeroRow = typeof zeros.$inferSelect;
 export type ColdBoreEventRow = typeof coldBoreEvents.$inferSelect;
+export type ShotLogRow = typeof shotLogs.$inferSelect;
 
 export type RifleWithActiveLoad = RifleRow & {
   activeLoad: LoadRow | null;
@@ -201,4 +202,24 @@ export async function insertColdBoreEvent(
   data: Omit<ColdBoreEventRow, 'createdAt'>,
 ): Promise<void> {
   await db.insert(coldBoreEvents).values({ ...data, createdAt: now() });
+}
+
+// ─── Shot logs ────────────────────────────────────────────────────────────────
+
+export async function getShotLogs(
+  rifleId: string,
+  limit = 50,
+): Promise<ShotLogRow[]> {
+  return db
+    .select()
+    .from(shotLogs)
+    .where(eq(shotLogs.rifleId, rifleId))
+    .orderBy(desc(shotLogs.createdAt))
+    .limit(limit);
+}
+
+export async function insertShotLog(
+  data: Omit<ShotLogRow, 'createdAt'>,
+): Promise<void> {
+  await db.insert(shotLogs).values({ ...data, createdAt: now() });
 }

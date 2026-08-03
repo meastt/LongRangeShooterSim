@@ -33,8 +33,9 @@ import {
   updateSuppressor,
   getColdBoreEvents,
   insertColdBoreEvent,
+  upsertLoad,
 } from '../../src/db/queries';
-import type { FieldProfile, ColdBoreEventRow } from '../../src/db/queries';
+import type { FieldProfile, ColdBoreEventRow, LoadRow } from '../../src/db/queries';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useTheme } from '../../src/theme';
 import type { Theme } from '../../src/theme';
@@ -90,6 +91,118 @@ function SwitchRow({
   );
 }
 
+/** Measured suppressor MV delta + optional zero shifts — per load. */
+function SuppressorFields({
+  load,
+  enabled,
+  theme,
+  onSaved,
+}: {
+  load: LoadRow;
+  enabled: boolean;
+  theme: Theme;
+  onSaved: () => void;
+}) {
+  const [delta, setDelta] = useState(
+    load.suppressorMvDeltaFps != null ? String(load.suppressorMvDeltaFps) : '',
+  );
+  const [elevShift, setElevShift] = useState(
+    load.suppressorZeroShiftMilsElev != null
+      ? String(load.suppressorZeroShiftMilsElev)
+      : '',
+  );
+  const [windShift, setWindShift] = useState(
+    load.suppressorZeroShiftMilsWind != null
+      ? String(load.suppressorZeroShiftMilsWind)
+      : '',
+  );
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const deltaNum = delta.trim() === '' ? null : parseFloat(delta);
+      const elevNum = elevShift.trim() === '' ? null : parseFloat(elevShift);
+      const windNum = windShift.trim() === '' ? null : parseFloat(windShift);
+      if (deltaNum != null && Number.isNaN(deltaNum)) {
+        Alert.alert('Invalid MV delta', 'Enter fps change (e.g. -45) or leave blank.');
+        return;
+      }
+      if (elevNum != null && Number.isNaN(elevNum)) {
+        Alert.alert('Invalid elev shift', 'Enter mils (e.g. 0.1) or leave blank.');
+        return;
+      }
+      if (windNum != null && Number.isNaN(windNum)) {
+        Alert.alert('Invalid wind shift', 'Enter mils or leave blank.');
+        return;
+      }
+      await upsertLoad({
+        ...load,
+        suppressorMvDeltaFps: deltaNum,
+        suppressorZeroShiftMilsElev: elevNum,
+        suppressorZeroShiftMilsWind: windNum,
+      });
+      onSaved();
+    } catch (e) {
+      Alert.alert('Save failed', String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View style={{ paddingHorizontal: 14, paddingBottom: 12, gap: 8 }}>
+      <Text style={[styles.hintInline, { color: theme.dim }]}>
+        {enabled
+          ? 'Can on — solution uses measured MV delta (blank = bare MV, no invented default).'
+          : 'Can off — delta stored for when you attach the suppressor.'}
+      </Text>
+      <View style={styles.supField}>
+        <Text style={[styles.supLabel, { color: theme.dim }]}>MV DELTA (FPS)</Text>
+        <TextInput
+          style={[styles.supInput, { color: theme.primary, borderColor: theme.border, backgroundColor: theme.bg }]}
+          value={delta}
+          onChangeText={setDelta}
+          placeholder="-45"
+          placeholderTextColor={theme.dim}
+          keyboardType="numbers-and-punctuation"
+        />
+      </View>
+      <View style={styles.supField}>
+        <Text style={[styles.supLabel, { color: theme.dim }]}>ZERO SHIFT ELEV (MIL)</Text>
+        <TextInput
+          style={[styles.supInput, { color: theme.primary, borderColor: theme.border, backgroundColor: theme.bg }]}
+          value={elevShift}
+          onChangeText={setElevShift}
+          placeholder="0.0"
+          placeholderTextColor={theme.dim}
+          keyboardType="numbers-and-punctuation"
+        />
+      </View>
+      <View style={styles.supField}>
+        <Text style={[styles.supLabel, { color: theme.dim }]}>ZERO SHIFT WIND (MIL)</Text>
+        <TextInput
+          style={[styles.supInput, { color: theme.primary, borderColor: theme.border, backgroundColor: theme.bg }]}
+          value={windShift}
+          onChangeText={setWindShift}
+          placeholder="0.0"
+          placeholderTextColor={theme.dim}
+          keyboardType="numbers-and-punctuation"
+        />
+      </View>
+      <Pressable
+        onPress={save}
+        disabled={saving}
+        style={[styles.logBtn, { borderColor: theme.primary, alignSelf: 'flex-start' }]}
+      >
+        <Text style={[styles.logBtnText, { color: theme.primary }]}>
+          {saving ? 'SAVING…' : 'SAVE SUPPRESSOR DATA'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 // ─── Cold-bore log row ────────────────────────────────────────────────────────
 
 function ColdBoreRow({ event, theme }: { event: ColdBoreEventRow; theme: Theme }) {
@@ -123,11 +236,15 @@ function ColdBoreRow({ event, theme }: { event: ColdBoreEventRow; theme: Theme }
 
 function LogColdBoreModal({
   rifleId,
+  loadId,
+  suppressorEnabled,
   theme,
   onSave,
   onClose,
 }: {
   rifleId: string;
+  loadId: string;
+  suppressorEnabled: boolean;
   theme: Theme;
   onSave: () => void;
   onClose: () => void;
@@ -148,6 +265,8 @@ function LogColdBoreModal({
       await insertColdBoreEvent({
         id: Crypto.randomUUID(),
         rifleId,
+        loadId,
+        suppressorEnabled,
         date: new Date().toISOString().slice(0, 10),
         firstShotOffsetMrad: offsetNum,
         tempFahrenheit: parseFloat(temp) || null,
@@ -366,6 +485,12 @@ export default function ProfileDetailScreen() {
             onToggle={handleToggleSuppressor}
             theme={theme}
           />
+          <SuppressorFields
+            load={profileLoad}
+            enabled={rifle.suppressorEnabled ?? false}
+            theme={theme}
+            onSaved={loadProfile}
+          />
         </View>
 
         {/* Load */}
@@ -505,9 +630,11 @@ export default function ProfileDetailScreen() {
       )}
 
       {/* Cold-bore log modal */}
-      {logModalVisible && (
+      {logModalVisible && profile && (
         <LogColdBoreModal
           rifleId={rifleId!}
+          loadId={profile.load.id}
+          suppressorEnabled={profile.rifle.suppressorEnabled}
           theme={theme}
           onSave={() => {
             setLogModalVisible(false);
@@ -636,6 +763,17 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   hint: { fontFamily: FONT, fontSize: 11, lineHeight: 18 },
+  hintInline: { fontFamily: FONT, fontSize: 10, lineHeight: 15 },
+  supField: { gap: 4 },
+  supLabel: { fontFamily: FONT, fontSize: 9, letterSpacing: 1 },
+  supInput: {
+    fontFamily: FONT,
+    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   logField: { gap: 6 },
   logFieldLabel: { fontFamily: FONT, fontSize: 10, letterSpacing: 1 },
   logFieldInput: {
