@@ -100,4 +100,17 @@ describe('buildEffectiveSolutionInputs', () => {
     );
     expect(e.suppressorElevShiftMils).toBeCloseTo(0.1);
   });
+
+  it('passes twist and incline into trajectory inputs for advanced corrections', () => {
+    const e = buildEffectiveSolutionInputs(
+      fakeProfile({}),
+      ICAO_STANDARD_ATMOSPHERE,
+      { inclineDeg: 15, latitudeDeg: 45, azimuthDeg: 90 },
+    );
+    expect(e.trajectory.twistInches).toBe(8);
+    expect(e.trajectory.twistDirection).toBe('right');
+    expect(e.trajectory.inclineDeg).toBe(15);
+    expect(e.trajectory.latitudeDeg).toBe(45);
+    expect(e.trajectory.azimuthDeg).toBe(90);
+  });
 });

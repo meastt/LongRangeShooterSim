@@ -144,6 +144,9 @@ export default function ShotPlanScreen() {
   const theme = useTheme(displayMode);
   const holdUnit = useFieldStore((s) => s.holdUnit);
   const setRange = useFieldStore((s) => s.setRange);
+  const setInclineDeg = useFieldStore((s) => s.setInclineDeg);
+  const setLatitudeDeg = useFieldStore((s) => s.setLatitudeDeg);
+  const setShotAzimuthDeg = useFieldStore((s) => s.setShotAzimuthDeg);
   const result = useSolverResult();
 
   const { isPro, showPaywall, PaywallModal } = useProGate(theme);
@@ -284,24 +287,20 @@ export default function ShotPlanScreen() {
   const rangeYdFlat = hasCoords ? Math.round(haversineYards(sLat, sLng, tLat, tLng)) : null;
   const elevDelta = tElev - sElev;
 
-  // Angle-corrected range (incline correction):
-  // Ballistic range = slant range × cos(angle). The vertical separation between
-  // shooter and target in the same horizontal distance is elevDelta feet.
-  const slantRangeYd = rangeYdFlat;
-  const angleDeg = slantRangeYd
-    ? Math.atan(elevDelta / (slantRangeYd * 3)) * (180 / Math.PI) // 3ft/yd
-    : 0;
-  const correctedRangeYd = slantRangeYd
-    ? Math.round(slantRangeYd * Math.cos((angleDeg * Math.PI) / 180))
-    : null;
-
-  // Push the corrected range into the field store whenever it changes so the
-  // useSolverResult hook picks it up and produces real ballistic output.
-  useEffect(() => {
-    if (correctedRangeYd !== null) {
-      setRange(correctedRangeYd);
-    }
-  }, [correctedRangeYd, setRange]);
+  // Ground (haversine) + elev → slant range and incline for the solver path.
+  // Spec: docs/specs/solver-advanced-corrections.md — solve at slant, scale elev by cos(θ).
+  const elevYd = elevDelta / 3; // feet → yards
+  const slantRangeYd =
+    rangeYdFlat != null
+      ? Math.round(Math.sqrt(rangeYdFlat * rangeYdFlat + elevYd * elevYd))
+      : null;
+  const angleDeg =
+    rangeYdFlat != null && rangeYdFlat > 0
+      ? Math.atan2(elevYd, rangeYdFlat) * (180 / Math.PI)
+      : 0;
+  // Horizontal equivalent (display only — Rifleman's rule reference).
+  const correctedRangeYd =
+    slantRangeYd != null ? Math.round(slantRangeYd * Math.cos((angleDeg * Math.PI) / 180)) : null;
 
   // Bearing (shooter → target)
   function bearingDeg(): number | null {
@@ -315,6 +314,30 @@ export default function ShotPlanScreen() {
   }
 
   const bearing = bearingDeg();
+
+  // Push slant range + incline + geo into the field store for advanced corrections.
+  useEffect(() => {
+    if (slantRangeYd !== null) {
+      setRange(slantRangeYd);
+      setInclineDeg(angleDeg);
+    }
+    if (hasCoords && !isNaN(sLat)) {
+      setLatitudeDeg(sLat);
+    }
+    if (bearing != null) {
+      setShotAzimuthDeg(bearing);
+    }
+  }, [
+    slantRangeYd,
+    angleDeg,
+    hasCoords,
+    sLat,
+    bearing,
+    setRange,
+    setInclineDeg,
+    setLatitudeDeg,
+    setShotAzimuthDeg,
+  ]);
 
   // Format hold value in user's preferred unit.
   function fmtHold(mils: number, decimals = 2): string {
@@ -430,14 +453,21 @@ export default function ShotPlanScreen() {
                 <Text style={[styles.computedTitle, { color: theme.dim }]}>COMPUTED</Text>
 
                 <View style={styles.computedRow}>
-                  <Text style={[styles.computedLabel, { color: theme.dim }]}>Slant range</Text>
+                  <Text style={[styles.computedLabel, { color: theme.dim }]}>Ground range</Text>
                   <Text style={[styles.computedValue, { color: theme.primary }]}>{rangeYdFlat.toLocaleString()} yd</Text>
                 </View>
 
-                {correctedRangeYd !== null && correctedRangeYd !== rangeYdFlat && (
+                {slantRangeYd != null && slantRangeYd !== rangeYdFlat && (
                   <View style={styles.computedRow}>
-                    <Text style={[styles.computedLabel, { color: theme.dim }]}>Ballistic range</Text>
-                    <Text style={[styles.computedValue, { color: theme.primary }]}>{correctedRangeYd.toLocaleString()} yd</Text>
+                    <Text style={[styles.computedLabel, { color: theme.dim }]}>Slant range</Text>
+                    <Text style={[styles.computedValue, { color: theme.primary }]}>{slantRangeYd.toLocaleString()} yd</Text>
+                  </View>
+                )}
+
+                {correctedRangeYd !== null && correctedRangeYd !== slantRangeYd && (
+                  <View style={styles.computedRow}>
+                    <Text style={[styles.computedLabel, { color: theme.dim }]}>Horiz. equiv.</Text>
+                    <Text style={[styles.computedValue, { color: theme.dim }]}>{correctedRangeYd.toLocaleString()} yd</Text>
                   </View>
                 )}
 

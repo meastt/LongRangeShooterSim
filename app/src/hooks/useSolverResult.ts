@@ -14,9 +14,16 @@
  *
  * Suppressor + cold-bore corrections are applied post-solve per
  * docs/specs/suppressor-profiles.md and docs/specs/cold-bore-intelligence.md.
+ * Advanced holds (spin/Coriolis/AJ/cant/incline) per
+ * docs/specs/solver-advanced-corrections.md.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { computeTrajectory, solutionAtRange, windHoldMils } from '@aim/solver';
+import {
+  computeHoldCorrections,
+  computeTrajectory,
+  solutionAtRange,
+  windHoldMils,
+} from '@aim/solver';
 import type { TrajectoryRow } from '@aim/solver';
 import { getColdBoreEvents, getFieldProfile, getRiflesWithActiveLoad } from '../db/queries';
 import type { ColdBoreEventRow, FieldProfile } from '../db/queries';
@@ -28,9 +35,9 @@ import type { ColdBorePrediction } from '../lib/coldBore';
 export interface SolverResult {
   row: TrajectoryRow;
   profile: FieldProfile;
-  /** Crosswind hold in milliradians (includes suppressor wind shift). Positive = aim right. */
+  /** Crosswind hold in milliradians (includes suppressor + advanced deltas). Positive = aim right. */
   windHoldMils: number;
-  /** Elevation hold in milliradians after suppressor + optional cold-bore offsets. */
+  /** Elevation hold in milliradians after suppressor + cold-bore + advanced deltas. */
   elevHoldMils: number;
   /** Clicks to dial on the elevation turret (elevHold × clicksPerMrad). */
   dialClicks: number;
@@ -40,6 +47,8 @@ export interface SolverResult {
   coldBore: ColdBorePrediction | null;
   /** Whether cold-bore offset was added into elevHoldMils / dialClicks. */
   coldBoreApplied: boolean;
+  /** Miller SG when twist is known; otherwise null. */
+  stabilityFactor: number | null;
 }
 
 /**
@@ -60,6 +69,10 @@ export function useSolverResult(): SolverResult | null {
   const windSpeedMph = useFieldStore((s) => s.windSpeedMph);
   const windClockPosition = useFieldStore((s) => s.windClockPosition);
   const coldBoreApplyOffset = useFieldStore((s) => s.coldBoreApplyOffset);
+  const latitudeDeg = useFieldStore((s) => s.latitudeDeg);
+  const shotAzimuthDeg = useFieldStore((s) => s.shotAzimuthDeg);
+  const inclineDeg = useFieldStore((s) => s.inclineDeg);
+  const cantDeg = useFieldStore((s) => s.cantDeg);
 
   const [profile, setProfile] = useState<FieldProfile | null>(null);
   const [coldEvents, setColdEvents] = useState<ColdBoreEventRow[]>([]);
@@ -107,7 +120,12 @@ export function useSolverResult(): SolverResult | null {
     if (!profile) return null;
 
     const atmosphere = atmosphericOverride ?? profile.atmosphericSnapshot;
-    const effective = buildEffectiveSolutionInputs(profile, atmosphere);
+    const effective = buildEffectiveSolutionInputs(profile, atmosphere, {
+      latitudeDeg,
+      azimuthDeg: shotAzimuthDeg,
+      inclineDeg,
+      cantDeg,
+    });
     const trajectoryOutput = computeTrajectory(effective.trajectory);
 
     const row =
@@ -132,12 +150,35 @@ export function useSolverResult(): SolverResult | null {
     const coldBoreApplied =
       coldBoreApplyOffset && coldBore.canAutoApply && coldBore.sampleCount >= 3;
 
-    const elevHoldMils =
+    const elevBeforeAdvanced =
       (row.holdMils as number) +
       effective.suppressorElevShiftMils +
       (coldBoreApplied ? coldBore.elevOffsetMils : 0);
 
-    const windHold = windHoldBase + effective.suppressorWindShiftMils;
+    const windBeforeAdvanced = windHoldBase + effective.suppressorWindShiftMils;
+
+    const t = effective.trajectory;
+    const corrections = computeHoldCorrections({
+      rangeYards: row.rangeYards as number,
+      timeOfFlightSeconds: row.timeOfFlightSeconds,
+      elevHoldMils: elevBeforeAdvanced,
+      windHoldMils: windBeforeAdvanced,
+      crosswindMph,
+      muzzleVelocityFps: effective.effectiveMvFps,
+      weightGrains: profile.load.weightGrains as number,
+      diameterInches: profile.load.diameterInches as number,
+      twistInches: t.twistInches,
+      twistDirection: t.twistDirection,
+      latitudeDeg: t.latitudeDeg,
+      azimuthDeg: t.azimuthDeg,
+      cantDeg: t.cantDeg,
+      inclineDeg: t.inclineDeg,
+    });
+
+    const elevHoldMils =
+      elevBeforeAdvanced + (corrections.elevHoldDeltaMils as number);
+    const windHold =
+      windBeforeAdvanced + (corrections.windHoldDeltaMils as number);
     const clicksPerMrad = profile.scope.clicksPerMrad;
     const dialClicks = Math.round(elevHoldMils * clicksPerMrad);
 
@@ -151,6 +192,7 @@ export function useSolverResult(): SolverResult | null {
       suppressorDeltaMissing: effective.suppressorDeltaMissing,
       coldBore,
       coldBoreApplied,
+      stabilityFactor: corrections.stabilityFactor,
     };
   }, [
     profile,
@@ -160,5 +202,9 @@ export function useSolverResult(): SolverResult | null {
     windSpeedMph,
     windClockPosition,
     coldBoreApplyOffset,
+    latitudeDeg,
+    shotAzimuthDeg,
+    inclineDeg,
+    cantDeg,
   ]);
 }

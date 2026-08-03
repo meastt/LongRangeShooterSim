@@ -10,6 +10,7 @@ import { FieldHUD } from '../../src/components/FieldHUD';
 import { RangeInput } from '../../src/components/RangeInput';
 import { WindInput } from '../../src/components/WindInput';
 import { AtmoInput } from '../../src/components/AtmoInput';
+import { InclineInput } from '../../src/components/InclineInput';
 import { RifleSwitcher } from '../../src/components/RifleSwitcher';
 import { TacticalMap } from '../../src/components/Map/TacticalMap';
 import { useFieldStore } from '../../src/store/fieldStore';
@@ -44,10 +45,11 @@ export default function FieldScreen() {
           </ScrollView>
         </View>
 
-        {/* Wind + Atmo chips */}
+        {/* Wind + Atmo + Incline chips */}
         <View style={styles.secondaryInputs}>
           <WindInput theme={theme} />
           <AtmoInput theme={theme} />
+          <InclineInput theme={theme} />
         </View>
 
         {/* Range scrubber */}

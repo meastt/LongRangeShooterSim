@@ -1,9 +1,17 @@
 /**
  * Maps a FieldProfile (+ field overrides) to solver inputs and post-hold corrections.
  * Spec: docs/specs/suppressor-profiles.md
+ * Advanced: docs/specs/solver-advanced-corrections.md
  */
 import type { AtmosphericConditions, TrajectoryInputs } from '@aim/solver';
 import type { FieldProfile } from '../db/queries';
+
+export type AdvancedFieldOpts = {
+  latitudeDeg?: number | null;
+  azimuthDeg?: number | null;
+  inclineDeg?: number | null;
+  cantDeg?: number | null;
+};
 
 export type EffectiveSolutionInputs = {
   trajectory: TrajectoryInputs;
@@ -20,10 +28,12 @@ export type EffectiveSolutionInputs = {
 /**
  * Build trajectory inputs with suppressor MV applied when measured.
  * Null delta + suppressor on → bare MV (no invented default) + warning flag.
+ * Passes twist / incline / lat-az when available for advanced corrections.
  */
 export function buildEffectiveSolutionInputs(
   profile: FieldProfile,
   atmosphere: AtmosphericConditions,
+  opts?: AdvancedFieldOpts,
 ): EffectiveSolutionInputs {
   const bareMv = profile.load.muzzleVelocityFps as number;
   const delta = profile.load.suppressorMvDeltaFps;
@@ -43,6 +53,8 @@ export function buildEffectiveSolutionInputs(
       ? (profile.load.suppressorZeroShiftMilsWind as number)
       : 0;
 
+  const twist = profile.rifle.twistRateIn;
+
   const trajectory: TrajectoryInputs = {
     bullet: {
       weightGrains: profile.load.weightGrains as TrajectoryInputs['bullet']['weightGrains'],
@@ -54,6 +66,15 @@ export function buildEffectiveSolutionInputs(
     scopeHeightInches: profile.zero.scopeHeightInches as TrajectoryInputs['scopeHeightInches'],
     zeroRangeYards: profile.zero.zeroRangeYards as TrajectoryInputs['zeroRangeYards'],
     atmosphere,
+    ...(twist != null && twist > 0
+      ? { twistInches: twist, twistDirection: 'right' as const }
+      : {}),
+    ...(opts?.latitudeDeg != null ? { latitudeDeg: opts.latitudeDeg } : {}),
+    ...(opts?.azimuthDeg != null ? { azimuthDeg: opts.azimuthDeg } : {}),
+    ...(opts?.inclineDeg != null && opts.inclineDeg !== 0
+      ? { inclineDeg: opts.inclineDeg }
+      : {}),
+    ...(opts?.cantDeg != null && opts.cantDeg !== 0 ? { cantDeg: opts.cantDeg } : {}),
   };
 
   return {

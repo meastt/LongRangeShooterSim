@@ -72,6 +72,24 @@ function stateDerivative(
   };
 }
 
+/** Resolve BC (lb/in²) from optional velocity segments; else base BC. */
+function resolveBcUs(
+  speedMps: number,
+  baseBc: number,
+  segments: TrajectoryInputs['bullet']['bcSegments'],
+): number {
+  if (!segments || segments.length === 0) return baseBc;
+  const speedFps = speedMps * MPS_TO_FPS;
+  let best: { min: number; bc: number } | null = null;
+  for (const seg of segments) {
+    const min = seg.minVelocityFps as number;
+    if (speedFps >= min && (best === null || min > best.min)) {
+      best = { min, bc: seg.bc as number };
+    }
+  }
+  return best?.bc ?? baseBc;
+}
+
 function addStates(a: State, b: State): State {
   return { x: a.x + b.x, y: a.y + b.y, vx: a.vx + b.vx, vy: a.vy + b.vy };
 }
@@ -81,7 +99,7 @@ function scaleState(s: State, k: number): State {
 }
 
 /**
- * Single RK4 step.
+ * Single RK4 step with velocity-dependent BC (multi-segment).
  * Reference: Runge-Kutta 4th-order method; see McCoy (1999), Appendix A.
  */
 function rk4Step(
@@ -89,22 +107,21 @@ function rk4Step(
   dt: number,
   rho: number,
   speedOfSound: number,
-  bcSI: number,
+  baseBcUs: number,
+  segments: TrajectoryInputs['bullet']['bcSegments'],
   dragModel: 'G1' | 'G7',
 ): State {
-  const k1 = scaleState(stateDerivative(s, rho, speedOfSound, bcSI, dragModel), dt);
-  const k2 = scaleState(
-    stateDerivative(addStates(s, scaleState(k1, 0.5)), rho, speedOfSound, bcSI, dragModel),
-    dt,
-  );
-  const k3 = scaleState(
-    stateDerivative(addStates(s, scaleState(k2, 0.5)), rho, speedOfSound, bcSI, dragModel),
-    dt,
-  );
-  const k4 = scaleState(
-    stateDerivative(addStates(s, k3), rho, speedOfSound, bcSI, dragModel),
-    dt,
-  );
+  const deriv = (state: State): State => {
+    const vMag = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
+    const bcUs = resolveBcUs(vMag, baseBcUs, segments);
+    const bcSI = bcToSI(bcUs);
+    return stateDerivative(state, rho, speedOfSound, bcSI, dragModel);
+  };
+
+  const k1 = scaleState(deriv(s), dt);
+  const k2 = scaleState(deriv(addStates(s, scaleState(k1, 0.5))), dt);
+  const k3 = scaleState(deriv(addStates(s, scaleState(k2, 0.5))), dt);
+  const k4 = scaleState(deriv(addStates(s, k3)), dt);
 
   const sixth = 1 / 6;
   return {
@@ -127,7 +144,8 @@ function integrate(
   maxRangeM: number,
   rho: number,
   speedOfSound: number,
-  bcSI: number,
+  baseBcUs: number,
+  segments: TrajectoryInputs['bullet']['bcSegments'],
   dragModel: 'G1' | 'G7',
 ): IntegrationPoint[] {
   const dt = 0.001; // 1 ms — gives sub-0.01" accuracy for typical rifle trajectories
@@ -145,7 +163,7 @@ function integrate(
   // 8 s time cap: a transonic .308 reaches 1800 yd in ~5.5 s; slow rimfire
   // loads that can't get there in 8 s simply produce a shorter table.
   while (s.x < maxRangeM + 5 && t < 8.0) {
-    s = rk4Step(s, dt, rho, speedOfSound, bcSI, dragModel);
+    s = rk4Step(s, dt, rho, speedOfSound, baseBcUs, segments, dragModel);
     t += dt;
     points.push({ state: s, t });
     // Safety: stop if bullet has fallen far below bore (e.g. extreme misuse)
@@ -204,7 +222,8 @@ export function computeTrajectory(inputs: TrajectoryInputs): TrajectoryOutput {
     inputs;
 
   const air = computeAirProperties(atmosphere);
-  const bcSI = bcToSI(bullet.bc as number);
+  const baseBcUs = bullet.bc as number;
+  const segments = bullet.bcSegments;
   const mvMps = (muzzleVelocityFps as number) * FPS_TO_MPS;
   const scopeHeightM = (scopeHeightInches as number) * INCHES_TO_METERS;
   const zeroRangeM = (zeroRangeYards as number) * YARDS_TO_METERS;
@@ -213,7 +232,7 @@ export function computeTrajectory(inputs: TrajectoryInputs): TrajectoryOutput {
   // Pass 1: level fire to estimate drop at zero range
   const pass1 = integrate(
     mvMps, 0, zeroRangeM + 5,
-    air.densityKgM3, air.speedOfSoundMps, bcSI, bullet.dragModel,
+    air.densityKgM3, air.speedOfSoundMps, baseBcUs, segments, bullet.dragModel,
   );
   const zeroPoint1 = interpolateAtX(pass1, zeroRangeM);
   const dropAtZeroM = zeroPoint1 !== null ? zeroPoint1.state.y : 0;
@@ -225,7 +244,7 @@ export function computeTrajectory(inputs: TrajectoryInputs): TrajectoryOutput {
   // Pass 2: full trajectory with corrected bore angle
   const pass2 = integrate(
     mvMps, boreAngleRad, maxRangeM,
-    air.densityKgM3, air.speedOfSoundMps, bcSI, bullet.dragModel,
+    air.densityKgM3, air.speedOfSoundMps, baseBcUs, segments, bullet.dragModel,
   );
 
   const bulletMassKg = (bullet.weightGrains as number) * GRAINS_TO_KG;

@@ -2,6 +2,14 @@
 export { computeTrajectory } from './trajectory';
 export { solutionAtRange } from './interpolate';
 export { windDriftInches, windHoldMils } from './wind';
+export {
+  computeHoldCorrections,
+  millerStabilityFactor,
+  spinDriftInches,
+  coriolisDeflectionInches,
+  aerodynamicJumpInchesHigh,
+} from './corrections';
+export type { CorrectionInputs, HoldCorrections, TwistDirection } from './corrections';
 
 export type {
   BulletParams,
@@ -10,6 +18,7 @@ export type {
   TrajectoryRow,
   TrajectoryOutput,
   DragModel,
+  BcSegment,
   Yards,
   Inches,
   FeetPerSecond,

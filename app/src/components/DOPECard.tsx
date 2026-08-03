@@ -34,10 +34,15 @@ import {
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
-import { computeTrajectory, windHoldMils as solverWindHold } from '@aim/solver';
+import {
+  computeHoldCorrections,
+  computeTrajectory,
+  windHoldMils as solverWindHold,
+} from '@aim/solver';
 import type { TrajectoryRow, TrajectoryInputs } from '@aim/solver';
 import { buildEffectiveSolutionInputs } from '../lib/profileToSolverInput';
 import type { FieldProfile } from '../db/queries';
+import { useFieldStore } from '../store/fieldStore';
 import type { Theme } from '../theme';
 
 const FONT = 'SpaceMono-Regular';
@@ -87,11 +92,27 @@ function buildDOPE(
   profile: FieldProfile,
   windSpeedMph: number,
   windClockPos: number,
+  advanced?: {
+    latitudeDeg?: number | null;
+    azimuthDeg?: number | null;
+    inclineDeg?: number;
+    cantDeg?: number;
+  },
 ): DOPERow[] {
-  const effective = buildEffectiveSolutionInputs(profile, profile.atmosphericSnapshot);
+  const effective = buildEffectiveSolutionInputs(
+    profile,
+    profile.atmosphericSnapshot,
+    {
+      latitudeDeg: advanced?.latitudeDeg,
+      azimuthDeg: advanced?.azimuthDeg,
+      inclineDeg: advanced?.inclineDeg,
+      cantDeg: advanced?.cantDeg,
+    },
+  );
   const traj = computeTrajectory(effective.trajectory);
   const clicksPerMrad = profile.scope.clicksPerMrad;
   const crosswindFraction = clockToWindFraction(windClockPos);
+  const t = effective.trajectory;
 
   // Sample the trajectory at 50 yd steps from 0 to 1000 yd
   const TARGET_RANGES = Array.from({ length: 21 }, (_, i) => i * 50);
@@ -107,12 +128,32 @@ function buildDOPE(
     const crosswindMph = windSpeedMph * crosswindFraction;
     // Lag-time (Didion) wind hold — see packages/solver/src/wind.ts.
     const mv = effective.effectiveMvFps as TrajectoryInputs['muzzleVelocityFps'];
-    const windHoldMils =
+    const windBase =
       (solverWindHold(crosswindMph, tof, row.rangeYards, mv) as number) +
       effective.suppressorWindShiftMils;
     const windHoldPerMph = solverWindHold(1, tof, row.rangeYards, mv) as number;
-    const elevHold =
+    const elevBase =
       (row.holdMils as number) + effective.suppressorElevShiftMils;
+
+    const corr = computeHoldCorrections({
+      rangeYards: rangeYd,
+      timeOfFlightSeconds: tof,
+      elevHoldMils: elevBase,
+      windHoldMils: windBase,
+      crosswindMph,
+      muzzleVelocityFps: effective.effectiveMvFps,
+      weightGrains: profile.load.weightGrains as number,
+      diameterInches: profile.load.diameterInches as number,
+      twistInches: t.twistInches,
+      twistDirection: t.twistDirection,
+      latitudeDeg: t.latitudeDeg,
+      azimuthDeg: t.azimuthDeg,
+      cantDeg: t.cantDeg,
+      inclineDeg: t.inclineDeg,
+    });
+
+    const elevHold = elevBase + (corr.elevHoldDeltaMils as number);
+    const windHoldMils = windBase + (corr.windHoldDeltaMils as number);
 
     return {
       targetRangeYards: targetRange,   // always the clean 50yd step
@@ -289,10 +330,20 @@ export function DOPECard({
 }: Props) {
   const { width } = useWindowDimensions();
   const [exporting, setExporting] = useState(false);
+  const latitudeDeg = useFieldStore((s) => s.latitudeDeg);
+  const shotAzimuthDeg = useFieldStore((s) => s.shotAzimuthDeg);
+  const inclineDeg = useFieldStore((s) => s.inclineDeg);
+  const cantDeg = useFieldStore((s) => s.cantDeg);
 
   const rows = useMemo(
-    () => buildDOPE(profile, windSpeedMph, windClockPos),
-    [profile, windSpeedMph, windClockPos],
+    () =>
+      buildDOPE(profile, windSpeedMph, windClockPos, {
+        latitudeDeg,
+        azimuthDeg: shotAzimuthDeg,
+        inclineDeg,
+        cantDeg,
+      }),
+    [profile, windSpeedMph, windClockPos, latitudeDeg, shotAzimuthDeg, inclineDeg, cantDeg],
   );
 
   const windActive = windSpeedMph > 0;

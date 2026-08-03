@@ -112,6 +112,8 @@ export function AtmoInput({ theme }: Props) {
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const wx = await fetchSurfaceWeather(loc.coords.latitude, loc.coords.longitude);
+      // Latitude enables Coriolis once azimuth is set (ShotPlan / map bearing).
+      useFieldStore.getState().setLatitudeDeg(loc.coords.latitude);
       setDraftTemp(String(Math.round(wx.conditions.temperatureFahrenheit as number)));
       setDraftPressure(String((wx.conditions.pressureInHg as number).toFixed(2)));
       setDraftHumidity(String(Math.round(wx.conditions.relativeHumidityPct)));

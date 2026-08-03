@@ -33,6 +33,12 @@ export type Milliradians = number & { readonly __brand: 'Milliradians' };
  */
 export type DragModel = 'G1' | 'G7';
 
+/** Velocity-stepped BC segment — use this BC when speed ≥ minVelocityFps. */
+export type BcSegment = {
+  readonly minVelocityFps: FeetPerSecond;
+  readonly bc: LbsPerSquareInch;
+};
+
 // ─── Inputs ─────────────────────────────────────────────────────────────────
 
 export type BulletParams = {
@@ -42,6 +48,11 @@ export type BulletParams = {
   /** Ballistic coefficient in lb/in² for the selected drag model. */
   readonly bc: LbsPerSquareInch;
   readonly dragModel: DragModel;
+  /**
+   * Optional multi-segment BC table (Strelok-style).
+   * Highest matching minVelocityFps wins; falls back to `bc` below all segments.
+   */
+  readonly bcSegments?: readonly BcSegment[];
 };
 
 /**
@@ -65,6 +76,20 @@ export type TrajectoryInputs = {
   /** Range at which bullet crosses the line-of-sight, yards. */
   readonly zeroRangeYards: Yards;
   readonly atmosphere: AtmosphericConditions;
+  // ── Optional advanced corrections (see docs/specs/solver-advanced-corrections.md) ──
+  /** Shooter latitude, degrees (+N). Enables Coriolis when set with azimuthDeg. */
+  readonly latitudeDeg?: number;
+  /** Firing azimuth, degrees (0=N, clockwise). */
+  readonly azimuthDeg?: number;
+  /** Barrel twist rate, inches per turn (e.g. 8 = 1:8"). Enables spin drift / AJ. */
+  readonly twistInches?: number;
+  readonly twistDirection?: 'right' | 'left';
+  /** Bullet length for Miller SG; default estimate 3.8×diameter if omitted. */
+  readonly bulletLengthInches?: Inches;
+  /** Rifle cant, degrees (+ clockwise from behind the rifle). */
+  readonly cantDeg?: number;
+  /** Line-of-sight incline, degrees (+ uphill). */
+  readonly inclineDeg?: number;
 };
 
 // ─── Outputs ─────────────────────────────────────────────────────────────────

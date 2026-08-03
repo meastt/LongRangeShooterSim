@@ -37,6 +37,14 @@ export interface FieldState {
    * to elev hold (first-shot of the day). Default off — display-only until armed.
    */
   coldBoreApplyOffset: boolean;
+  /** Shooter latitude (°N). Enables Coriolis when set with shotAzimuthDeg. */
+  latitudeDeg: number | null;
+  /** Firing azimuth (° from N, clockwise). */
+  shotAzimuthDeg: number | null;
+  /** Line-of-sight incline (°). + = uphill. */
+  inclineDeg: number;
+  /** Rifle cant (°). + = clockwise from behind. */
+  cantDeg: number;
 
   // Actions
   setRange: (yards: number) => void;
@@ -48,6 +56,10 @@ export interface FieldState {
   setActiveRifleId: (id: string | null) => void;
   setWezEnabled: (enabled: boolean) => void;
   setColdBoreApplyOffset: (enabled: boolean) => void;
+  setLatitudeDeg: (lat: number | null) => void;
+  setShotAzimuthDeg: (az: number | null) => void;
+  setInclineDeg: (deg: number) => void;
+  setCantDeg: (deg: number) => void;
 }
 
 const DISPLAY_MODE_CYCLE: DisplayMode[] = ['day', 'bright', 'night-red'];
@@ -64,6 +76,10 @@ export const useFieldStore = create<FieldState>()(
       activeRifleId: null,
       wezEnabled: WEZ_ENABLED_BY_DEFAULT,
       coldBoreApplyOffset: false,
+      latitudeDeg: null,
+      shotAzimuthDeg: null,
+      inclineDeg: 0,
+      cantDeg: 0,
 
       setRange: (yards) => set({ rangeYards: Math.max(0, Math.min(1760, yards)) }),
       setWind: (speedMph, clockPosition) =>
@@ -81,6 +97,11 @@ export const useFieldStore = create<FieldState>()(
       setActiveRifleId: (id) => set({ activeRifleId: id }),
       setWezEnabled: (enabled) => set({ wezEnabled: enabled }),
       setColdBoreApplyOffset: (enabled) => set({ coldBoreApplyOffset: enabled }),
+      setLatitudeDeg: (lat) => set({ latitudeDeg: lat }),
+      setShotAzimuthDeg: (az) => set({ shotAzimuthDeg: az }),
+      setInclineDeg: (deg) =>
+        set({ inclineDeg: Math.max(-60, Math.min(60, deg)) }),
+      setCantDeg: (deg) => set({ cantDeg: Math.max(-45, Math.min(45, deg)) }),
     }),
     {
       name: 'aim-field-store',
