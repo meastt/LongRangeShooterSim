@@ -49,6 +49,13 @@ export const loads = sqliteTable('loads', {
   dragModel: text('drag_model', { enum: ['G1', 'G7'] }).notNull().default('G7'),
   muzzleVelocityFps: real('muzzle_velocity_fps').notNull(),
   powderCharge: text('powder_charge'),
+  /**
+   * Stable slug id (e.g. "hornady-eld-match-0.264-140") of the
+   * @aim/bullet-library entry this load was populated from, if any. Null for
+   * manually-entered loads or loads whose fields were hand-edited after
+   * selection. Purely informational — never read by the solver.
+   */
+  libraryBulletId: text('library_bullet_id'),
   notes: text('notes'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),

@@ -27,6 +27,9 @@ import { useFieldStore } from '../store/fieldStore';
 import { HunterWEZCard } from './WEZ/HunterWEZCard';
 import { WindRiskBand } from './WindRiskBand';
 import { useWindRisk } from '../hooks/useWindRisk';
+import { useLastKnownLocation } from '../hooks/useLastKnownLocation';
+import { windHoldMils as solverWindHold } from '@aim/solver';
+import type { TrajectoryInputs } from '@aim/solver';
 
 const MIL_TO_MOA = 3.43775;
 
@@ -95,8 +98,11 @@ export function FieldHUD({ result, theme }: Props) {
   const { width } = useWindowDimensions();
   const isWide = width > 400;
 
-  // Winds-aloft for wind-risk envelope — null lat/lon disables the API call
-  const windRisk = useWindRisk(null, null);
+  // Winds-aloft for wind-risk envelope. Location is coarse and one-shot;
+  // until permission is granted (or if denied) coords stay null and the
+  // wind-risk band simply doesn't render — solver output never blocks on this.
+  const coords = useLastKnownLocation();
+  const windRisk = useWindRisk(coords?.lat ?? null, coords?.lon ?? null);
 
   if (!result) {
     return (
@@ -231,8 +237,26 @@ export function FieldHUD({ result, theme }: Props) {
 
       <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
-      {/* Hunter WEZ traffic light */}
-      <HunterWEZCard result={result} theme={theme} />
+      {/* Hunter WEZ traffic light.
+          Wind uncertainty: convert the wind-risk σ (mph, from winds-aloft
+          variance) to an angular σ at this range via the same lag-time
+          formula used for the wind hold, then RSS with a 0.2 mil baseline
+          aiming/ranging uncertainty floor. */}
+      <HunterWEZCard
+        result={result}
+        theme={theme}
+        windSigmaMil={Math.sqrt(
+          0.2 ** 2 +
+            (windRisk
+              ? (solverWindHold(
+                  windRisk.sigmaWindMph,
+                  row.timeOfFlightSeconds,
+                  row.rangeYards,
+                  profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'],
+                ) as number)
+              : 0) ** 2,
+        )}
+      />
     </View>
   );
 }

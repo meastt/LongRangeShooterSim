@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
@@ -25,6 +25,22 @@ Sentry.init({
   environment: __DEV__ ? 'development' : 'production',
   // Mute noisy logs in production
   debug: __DEV__,
+  // Belt-and-suspenders PII scrub (CLAUDE.md: no profile names, GPS coords,
+  // or shot logs may ever leave the device in crash reports).
+  beforeSend(event) {
+    delete event.user;
+    if (event.contexts && 'geo' in event.contexts) delete event.contexts['geo'];
+    return event;
+  },
+  beforeBreadcrumb(breadcrumb) {
+    // Breadcrumbs can capture console logs / fetch URLs containing lat/lon.
+    const data = breadcrumb.data as Record<string, unknown> | undefined;
+    const url = typeof data?.['url'] === 'string' ? (data['url'] as string) : null;
+    if (url && /latitude=|longitude=/.test(url)) {
+      breadcrumb.data = { ...data, url: url.replace(/(latitude|longitude)=[-\d.]+/g, '$1=REDACTED') };
+    }
+    return breadcrumb;
+  },
 });
 
 // ─── RevenueCat initialisation ────────────────────────────────────────────────
@@ -104,6 +120,20 @@ function RootLayout() {
   // Prevent rendering until critical assets and data are ready
   if (!fontsLoaded && !fontError) return null;
   if (!dbSuccess && !dbError) return null;
+
+  // DB init failed — show a recovery message instead of a permanent blank screen.
+  if (dbError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0A0A0A', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+        <Text style={{ color: '#EF4444', fontSize: 18 }}>Database failed to initialize</Text>
+        <Text style={{ color: '#999', fontSize: 13, textAlign: 'center' }}>
+          Close and reopen the app. If this keeps happening, reinstall — your
+          profiles can be restored from a backup file via Settings.
+        </Text>
+        <Text style={{ color: '#555', fontSize: 11, textAlign: 'center' }}>{String(dbError)}</Text>
+      </View>
+    );
+  }
 
   return (
     <>

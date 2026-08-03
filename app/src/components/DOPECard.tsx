@@ -34,7 +34,7 @@ import {
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
-import { computeTrajectory } from '@aim/solver';
+import { computeTrajectory, windHoldMils as solverWindHold } from '@aim/solver';
 import type { TrajectoryRow, TrajectoryInputs } from '@aim/solver';
 import type { FieldProfile } from '../db/queries';
 import type { Theme } from '../theme';
@@ -116,10 +116,10 @@ function buildDOPE(
     const tof = row.timeOfFlightSeconds;
 
     const crosswindMph = windSpeedMph * crosswindFraction;
-    const windHoldMils =
-      targetRange > 0 ? (crosswindMph * tof * 17.6) / (targetRange * 0.036) : 0;
-    const windHoldPerMph =
-      targetRange > 0 ? (1 * tof * 17.6) / (targetRange * 0.036) : 0;
+    // Lag-time (Didion) wind hold — see packages/solver/src/wind.ts.
+    const mv = profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'];
+    const windHoldMils = solverWindHold(crosswindMph, tof, row.rangeYards, mv) as number;
+    const windHoldPerMph = solverWindHold(1, tof, row.rangeYards, mv) as number;
 
     return {
       targetRangeYards: targetRange,   // always the clean 50yd step

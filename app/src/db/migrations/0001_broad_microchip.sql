@@ -1,0 +1,1 @@
+ALTER TABLE `loads` ADD `library_bullet_id` text;

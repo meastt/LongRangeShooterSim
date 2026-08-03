@@ -86,3 +86,6 @@ GoogleService-Info.plist
 # godot/.godot/
 # [Oo]bj/
 # [Bb]uild/
+
+# Astro generated types
+landing/.astro/

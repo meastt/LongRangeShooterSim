@@ -1,5 +1,7 @@
 // ─── Trajectory API (Phase 0) ────────────────────────────────────────────────
 export { computeTrajectory } from './trajectory';
+export { solutionAtRange } from './interpolate';
+export { windDriftInches, windHoldMils } from './wind';
 
 export type {
   BulletParams,

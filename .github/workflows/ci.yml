@@ -20,8 +20,14 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Build before anything that imports @aim/solver — the package's types
+      # resolve to dist/, so a fresh checkout fails app typecheck without this.
+      - name: Solver build
+        run: npm run build -w @aim/solver
+
       - name: Solver tests
         run: npm run test:solver
 
-      - name: Solver build
-        run: npm run build -w @aim/solver
+      - name: App typecheck
+        run: npx tsc --noEmit
+        working-directory: app

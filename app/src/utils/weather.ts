@@ -5,7 +5,9 @@
  * Used to auto-fill AtmoInput and cache conditions for the wind-risk envelope.
  *
  * API: https://open-meteo.com/en/docs (free, no key required)
- * Backup: api.weather.gov (US only, used if Open-Meteo fails)
+ * On failure, falls back to ICAO standard atmosphere (marked 'fallback-icao'
+ * so the UI can show "STANDARD"). An api.weather.gov fallback is planned but
+ * NOT yet implemented.
  *
  * Results are cached in-memory with a timestamp; callers check `ageMinutes`
  * before deciding whether to show a "data is stale" warning.

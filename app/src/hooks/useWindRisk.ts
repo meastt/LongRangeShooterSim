@@ -72,10 +72,15 @@ async function fetchWindsAloft(lat: number, lon: number, elevationFt: number): P
 
   if (!speeds || speeds.length === 0) throw new Error('No wind data returned');
 
-  // Return next 6 hours from current hour
-  const now = new Date();
-  const currentHour = now.getHours();
-  return speeds.slice(currentHour, currentHour + 6).filter((v): v is number => v != null);
+  // Return the next 6 hours starting from the current hour. Match against the
+  // API's own time array (local ISO strings, timezone=auto) rather than
+  // indexing by device hour — Date parses "YYYY-MM-DDTHH:mm" as local time,
+  // which matches the timezone=auto convention.
+  const times = data.hourly?.time ?? [];
+  const cutoffMs = Date.now() - 60 * 60 * 1000;
+  let startIdx = times.findIndex((t) => new Date(t).getTime() > cutoffMs);
+  if (startIdx < 0) startIdx = 0;
+  return speeds.slice(startIdx, startIdx + 6).filter((v): v is number => v != null);
 }
 
 function std(values: number[]): number {

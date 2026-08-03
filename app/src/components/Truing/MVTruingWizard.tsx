@@ -24,7 +24,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { computeTrajectory } from '@aim/solver';
+import { computeTrajectory, solutionAtRange } from '@aim/solver';
 import type { TrajectoryInputs } from '@aim/solver';
 import { upsertLoad } from '../../db/queries';
 import type { Theme } from '../../theme';
@@ -57,7 +57,9 @@ function bisectMV(
       ...inputs,
       muzzleVelocityFps: mid as TrajectoryInputs['muzzleVelocityFps'],
     });
-    const row = traj.rows.find((r) => (r.rangeYards as number) >= rangeYards) ??
+    // Interpolate at the exact observed range — snapping to a 25-yd row
+    // would bias the trued MV by up to ~20 fps.
+    const row = solutionAtRange(traj.rows, rangeYards) ??
                 traj.rows[traj.rows.length - 1];
     if (!row) break;
 

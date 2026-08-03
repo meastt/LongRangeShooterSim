@@ -22,9 +22,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Crypto from 'expo-crypto';
 import { upsertRifle, upsertLoad, upsertScope, upsertZero } from '../../src/db/queries';
 import { ICAO_STANDARD_ATMOSPHERE } from '@aim/solver';
+import type { LibraryBullet } from '@aim/bullet-library';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useTheme } from '../../src/theme';
 import type { Theme } from '../../src/theme';
+import { BulletPickerSheet } from '../../src/components/BulletPickerSheet';
 
 function Field({
   label,
@@ -115,6 +117,26 @@ export default function NewRifleScreen() {
   const [bc, setBc] = useState('');
   const [mv, setMv] = useState('');
   const [saving, setSaving] = useState(false);
+  const [libraryBulletId, setLibraryBulletId] = useState<string | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  function applyLibraryBullet(bullet: LibraryBullet) {
+    setBulletName(`${bullet.manufacturer} ${bullet.name}`);
+    setWeightGr(String(bullet.weightGrains));
+    setDiameterIn(String(bullet.diameterInches));
+    setDragModel(bullet.preferredModel);
+    setBc(String(bullet.preferredModel === 'G7' ? bullet.g7Bc : bullet.g1Bc));
+    setLibraryBulletId(bullet.id);
+    setPickerVisible(false);
+  }
+
+  /** Manual edits after a library pick invalidate the stored linkage. */
+  function editField<T>(setter: (v: T) => void) {
+    return (v: T) => {
+      setLibraryBulletId(null);
+      setter(v);
+    };
+  }
 
   async function save() {
     if (!name.trim() || !caliber.trim() || !bc.trim() || !mv.trim()) {
@@ -159,6 +181,7 @@ export default function NewRifleScreen() {
         dragModel,
         muzzleVelocityFps: mvNum,
         powderCharge: null,
+        libraryBulletId,
         notes: null,
       });
 
@@ -220,21 +243,37 @@ export default function NewRifleScreen() {
           <Field label="Caliber" value={caliber} onChangeText={setCaliber} placeholder="e.g. 6.5 PRC" theme={theme} />
 
           <Text style={[styles.section, { color: theme.dim }]}>LOAD</Text>
-          <Field label="Bullet name" value={bulletName} onChangeText={setBulletName} placeholder="e.g. 147gr ELD-M" theme={theme} />
-          <Field label="Weight (gr)" value={weightGr} onChangeText={setWeightGr} placeholder="e.g. 147" keyboardType="decimal-pad" theme={theme} />
-          <Field label="Diameter (in)" value={diameterIn} onChangeText={setDiameterIn} placeholder="e.g. 0.264" keyboardType="decimal-pad" theme={theme} />
+
+          <Pressable
+            onPress={() => setPickerVisible(true)}
+            style={[styles.libraryBtn, { borderColor: theme.primary }]}
+          >
+            <Ionicons name="search" size={16} color={theme.primary} />
+            <Text style={[styles.libraryBtnText, { color: theme.primary }]}>
+              CHOOSE FROM LIBRARY
+            </Text>
+          </Pressable>
+          {libraryBulletId && (
+            <Text style={[styles.libraryLinked, { color: theme.dim }]}>
+              Linked to library entry — editing fields below clears the link.
+            </Text>
+          )}
+
+          <Field label="Bullet name" value={bulletName} onChangeText={editField(setBulletName)} placeholder="e.g. 147gr ELD-M" theme={theme} />
+          <Field label="Weight (gr)" value={weightGr} onChangeText={editField(setWeightGr)} placeholder="e.g. 147" keyboardType="decimal-pad" theme={theme} />
+          <Field label="Diameter (in)" value={diameterIn} onChangeText={editField(setDiameterIn)} placeholder="e.g. 0.264" keyboardType="decimal-pad" theme={theme} />
 
           <View style={styles.field}>
             <Text style={[styles.fieldLabel, { color: theme.label }]}>Drag model</Text>
             <SegmentControl
               options={['G7', 'G1']}
               selected={dragModel}
-              onSelect={(v) => setDragModel(v as 'G7' | 'G1')}
+              onSelect={editField((v) => setDragModel(v as 'G7' | 'G1'))}
               theme={theme}
             />
           </View>
 
-          <Field label="BC (lb/in²)" value={bc} onChangeText={setBc} placeholder="e.g. 0.301" keyboardType="decimal-pad" theme={theme} />
+          <Field label="BC (lb/in²)" value={bc} onChangeText={editField(setBc)} placeholder="e.g. 0.301" keyboardType="decimal-pad" theme={theme} />
           <Field label="Muzzle velocity (fps)" value={mv} onChangeText={setMv} placeholder="e.g. 2710" keyboardType="decimal-pad" theme={theme} />
 
           <Text style={[styles.note, { color: theme.dim }]}>
@@ -243,6 +282,13 @@ export default function NewRifleScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BulletPickerSheet
+        visible={pickerVisible}
+        theme={theme}
+        onSelect={applyLibraryBullet}
+        onCancel={() => setPickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -297,4 +343,16 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 16,
   },
+  libraryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 56,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  libraryBtnText: { fontFamily: FONT, fontSize: 12, letterSpacing: 1.5 },
+  libraryLinked: { fontFamily: FONT, fontSize: 10, lineHeight: 15 },
 });

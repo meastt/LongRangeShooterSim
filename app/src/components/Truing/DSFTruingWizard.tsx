@@ -28,7 +28,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { computeTrajectory } from '@aim/solver';
+import { computeTrajectory, solutionAtRange } from '@aim/solver';
 import type { TrajectoryInputs } from '@aim/solver';
 import { upsertLoad } from '../../db/queries';
 import type { Theme } from '../../theme';
@@ -72,7 +72,7 @@ function bisectDSF(
     const traj = computeTrajectory(scaledInputs);
     return points.reduce((sum, p) => {
       const row =
-        traj.rows.find((r) => (r.rangeYards as number) >= p.rangeYd) ??
+        solutionAtRange(traj.rows, p.rangeYd) ??
         traj.rows[traj.rows.length - 1]!;
       const diff = (row.pathInches as number) - p.pathIn;
       return sum + diff * diff;
@@ -195,7 +195,7 @@ export function DSFTruingWizard({ profile, theme, onComplete, onClose }: Props) 
     const traj = computeTrajectory(scaledInputs);
     const residuals = validPoints.map((p) => {
       const row =
-        traj.rows.find((r) => (r.rangeYards as number) >= p.rangeYd) ??
+        solutionAtRange(traj.rows, p.rangeYd) ??
         traj.rows[traj.rows.length - 1]!;
       return Math.abs((row.pathInches as number) - p.pathIn);
     });

@@ -22,9 +22,11 @@ const GRAINS_TO_KG = 6.47989e-5;
 // 1 J = 0.737562 ft·lb
 const JOULES_TO_FT_LBS = 0.737562;
 
-// Output ranges: every 25 yards from 0 to 1000 yards inclusive
+// Output ranges: every 25 yards from 0 to 1800 yards inclusive.
+// 1800 covers the field store's 1760 yd (1 mile) range cap with margin;
+// use solutionAtRange() to interpolate between rows for arbitrary ranges.
 const OUTPUT_RANGES_YARDS: readonly number[] = Array.from(
-  { length: 41 },
+  { length: 73 },
   (_, i) => i * 25,
 );
 
@@ -140,7 +142,9 @@ function integrate(
   let t = 0;
   points.push({ state: s, t });
 
-  while (s.x < maxRangeM + 5 && t < 5.0) {
+  // 8 s time cap: a transonic .308 reaches 1800 yd in ~5.5 s; slow rimfire
+  // loads that can't get there in 8 s simply produce a shorter table.
+  while (s.x < maxRangeM + 5 && t < 8.0) {
     s = rk4Step(s, dt, rho, speedOfSound, bcSI, dragModel);
     t += dt;
     points.push({ state: s, t });
@@ -184,7 +188,7 @@ function interpolateAtX(
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Compute a full 0–1000 yard trajectory in 25-yard steps.
+ * Compute a full 0–1800 yard trajectory in 25-yard steps.
  *
  * Algorithm:
  *   Pass 1 — level-fire (bore angle = 0) to find drop at zero range.
@@ -204,7 +208,7 @@ export function computeTrajectory(inputs: TrajectoryInputs): TrajectoryOutput {
   const mvMps = (muzzleVelocityFps as number) * FPS_TO_MPS;
   const scopeHeightM = (scopeHeightInches as number) * INCHES_TO_METERS;
   const zeroRangeM = (zeroRangeYards as number) * YARDS_TO_METERS;
-  const maxRangeM = 1000 * YARDS_TO_METERS;
+  const maxRangeM = 1800 * YARDS_TO_METERS;
 
   // Pass 1: level fire to estimate drop at zero range
   const pass1 = integrate(

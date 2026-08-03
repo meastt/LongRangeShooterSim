@@ -250,6 +250,7 @@ export async function insertImportedProfiles(
         dragModel: p.dragModel,
         muzzleVelocityFps: p.muzzleVelocityFps as any,
         powderCharge: null,
+        libraryBulletId: null,
         notes: null,
       });
 

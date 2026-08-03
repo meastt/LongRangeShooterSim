@@ -9,12 +9,11 @@
  * Wind hold calculation:
  *   Clock-position model: position 3 or 9 = full value (90°), 12/6 = zero.
  *   Crosswind component = windSpeedMph × sin(clockAngleDeg)
- *   Hold formula (Litz, Applied Ballistics §8):
- *     windHoldMils = crosswindMph × timeOfFlightSeconds × (1/rangeYards × 27.778)
- *   In practice: windHoldMils = (crosswindMph × tof) / (rangeYards × 0.036)
+ *   Hold uses the solver's lag-time (Didion) formula: drift = Vw × (TOF − range/MV).
+ *   See packages/solver/src/wind.ts for derivation and validation fixtures.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { computeTrajectory } from '@aim/solver';
+import { computeTrajectory, solutionAtRange, windHoldMils } from '@aim/solver';
 import type { TrajectoryRow, TrajectoryInputs } from '@aim/solver';
 import { getFieldProfile, getRiflesWithActiveLoad } from '../db/queries';
 import type { FieldProfile } from '../db/queries';
@@ -106,9 +105,12 @@ export function useSolverResult(): SolverResult | null {
 
     const trajectoryOutput = computeTrajectory(inputs);
 
-    // Find the row at or nearest to the selected range.
+    // Solve at the exact requested range (linear interpolation between the
+    // solver's 25-yd rows — snapping to a row was up to 24 yd of range error).
+    // Beyond the computed table (bullet went subsonic/slow and integration
+    // stopped) fall back to the last available row.
     const row =
-      trajectoryOutput.rows.find((r) => r.rangeYards >= rangeYards) ??
+      solutionAtRange(trajectoryOutput.rows, rangeYards) ??
       trajectoryOutput.rows[trajectoryOutput.rows.length - 1];
 
     if (!row) return null;
@@ -117,22 +119,19 @@ export function useSolverResult(): SolverResult | null {
     // crosswind component (mph) based on clock position
     const crosswindMph = windSpeedMph * clockToWindFraction(windClockPosition);
 
-    // Wind hold in milliradians.
-    // Derivation: drift_inches = crosswindMph * tof_seconds * 17.6  (mph→fps / 1 sec = 17.6)
-    //   holdMil = drift_inches / (rangeYards * 0.036)
-    // Simplified: holdMil = (crosswindMph * tof) / (rangeYards * 0.002045)
-    // Positive holdMil = aim right (wind pushing left→right = wind from left).
-    const rangeYd = row.rangeYards as number;
-    const tof = row.timeOfFlightSeconds;
-    const windHoldMils =
-      rangeYd > 0
-        ? (crosswindMph * tof * 17.6) / (rangeYd * 0.036)
-        : 0;
+    // Lag-time wind hold from the solver (drift = Vw × (TOF − range/MV)).
+    // Positive holdMil = aim right (wind from the left).
+    const windHold = windHoldMils(
+      crosswindMph,
+      row.timeOfFlightSeconds,
+      row.rangeYards,
+      profile.load.muzzleVelocityFps as TrajectoryInputs['muzzleVelocityFps'],
+    ) as number;
 
     // ── Dial clicks ───────────────────────────────────────────────────────────
     const clicksPerMrad = profile.scope.clicksPerMrad;
     const dialClicks = Math.round(row.holdMils * clicksPerMrad);
 
-    return { row, profile, windHoldMils, dialClicks };
+    return { row, profile, windHoldMils: windHold, dialClicks };
   }, [profile, rangeYards, atmosphericOverride, windSpeedMph, windClockPosition]);
 }

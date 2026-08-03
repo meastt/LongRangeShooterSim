@@ -35,9 +35,11 @@ import {
 } from '../../src/db/queries';
 import type { FieldProfile } from '../../src/db/queries';
 import { ICAO_STANDARD_ATMOSPHERE } from '@aim/solver';
+import type { LibraryBullet } from '@aim/bullet-library';
 import { useFieldStore } from '../../src/store/fieldStore';
 import { useTheme } from '../../src/theme';
 import type { Theme } from '../../src/theme';
+import { BulletPickerSheet } from '../../src/components/BulletPickerSheet';
 
 const FONT = 'SpaceMono-Regular';
 
@@ -135,6 +137,8 @@ export default function EditRifleScreen() {
   const [dragModel, setDragModel] = useState<'G7' | 'G1'>('G7');
   const [mv, setMv] = useState('');
   const [powderCharge, setPowderCharge] = useState('');
+  const [libraryBulletId, setLibraryBulletId] = useState<string | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   // ── Scope fields ─────────────────────────────────────────────────────────────
   const [scopeName, setScopeName] = useState('');
@@ -168,6 +172,7 @@ export default function EditRifleScreen() {
       setDragModel(p.load.dragModel as 'G7' | 'G1');
       setMv(String(p.load.muzzleVelocityFps));
       setPowderCharge(p.load.powderCharge ?? '');
+      setLibraryBulletId(p.load.libraryBulletId ?? null);
 
       setScopeName(p.scope.name);
       setClicksPerMrad(String(p.scope.clicksPerMrad));
@@ -182,6 +187,24 @@ export default function EditRifleScreen() {
       setHumidityPct(String(atmo.relativeHumidityPct));
     });
   }, [rifleId]));
+
+  function applyLibraryBullet(bullet: LibraryBullet) {
+    setBulletName(`${bullet.manufacturer} ${bullet.name}`);
+    setWeightGr(String(bullet.weightGrains));
+    setDiameterIn(String(bullet.diameterInches));
+    setDragModel(bullet.preferredModel);
+    setBc(String(bullet.preferredModel === 'G7' ? bullet.g7Bc : bullet.g1Bc));
+    setLibraryBulletId(bullet.id);
+    setPickerVisible(false);
+  }
+
+  /** Manual edits after a library pick invalidate the stored linkage. */
+  function editField<T>(setter: (v: T) => void) {
+    return (v: T) => {
+      setLibraryBulletId(null);
+      setter(v);
+    };
+  }
 
   async function save() {
     if (!profile || !rifleId) return;
@@ -228,6 +251,7 @@ export default function EditRifleScreen() {
         dragModel,
         muzzleVelocityFps: mvNum,
         powderCharge: powderCharge.trim() || null,
+        libraryBulletId,
         notes: profile.load.notes ?? null,
       });
 
@@ -297,17 +321,33 @@ export default function EditRifleScreen() {
           <Field label="Notes (optional)" value={rifleNotes} onChangeText={setRifleNotes} placeholder="e.g. Timney trigger, 2.5 lb" theme={theme} />
 
           <SectionHeader label="ACTIVE LOAD" theme={theme} />
-          <Field label="Bullet name" value={bulletName} onChangeText={setBulletName} placeholder="e.g. Hornady 147gr ELD-M" theme={theme} />
-          <Field label="Weight (gr)" value={weightGr} onChangeText={setWeightGr} placeholder="e.g. 147" keyboardType="decimal-pad" theme={theme} />
-          <Field label="Diameter (in)" value={diameterIn} onChangeText={setDiameterIn} placeholder="e.g. 0.264" keyboardType="decimal-pad" theme={theme} />
+
+          <Pressable
+            onPress={() => setPickerVisible(true)}
+            style={[styles.libraryBtn, { borderColor: theme.primary }]}
+          >
+            <Ionicons name="search" size={16} color={theme.primary} />
+            <Text style={[styles.libraryBtnText, { color: theme.primary }]}>
+              CHOOSE FROM LIBRARY
+            </Text>
+          </Pressable>
+          {libraryBulletId && (
+            <Text style={[styles.libraryLinked, { color: theme.dim }]}>
+              Linked to library entry — editing fields below clears the link.
+            </Text>
+          )}
+
+          <Field label="Bullet name" value={bulletName} onChangeText={editField(setBulletName)} placeholder="e.g. Hornady 147gr ELD-M" theme={theme} />
+          <Field label="Weight (gr)" value={weightGr} onChangeText={editField(setWeightGr)} placeholder="e.g. 147" keyboardType="decimal-pad" theme={theme} />
+          <Field label="Diameter (in)" value={diameterIn} onChangeText={editField(setDiameterIn)} placeholder="e.g. 0.264" keyboardType="decimal-pad" theme={theme} />
           <View style={styles.field}>
             <Text style={[styles.fieldLabel, { color: theme.label }]}>Drag model</Text>
-            <SegmentControl options={['G7', 'G1']} selected={dragModel} onSelect={(v) => setDragModel(v as 'G7' | 'G1')} theme={theme} />
+            <SegmentControl options={['G7', 'G1']} selected={dragModel} onSelect={editField((v) => setDragModel(v as 'G7' | 'G1'))} theme={theme} />
           </View>
           <Field
             label="BC (lb/in²)"
             value={bc}
-            onChangeText={setBc}
+            onChangeText={editField(setBc)}
             placeholder="e.g. 0.301"
             keyboardType="decimal-pad"
             hint="G7 BC from Berger / Hornady / Sierra data"
@@ -353,6 +393,13 @@ export default function EditRifleScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <BulletPickerSheet
+        visible={pickerVisible}
+        theme={theme}
+        onSelect={applyLibraryBullet}
+        onCancel={() => setPickerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -388,4 +435,16 @@ const styles = StyleSheet.create({
   segmentOption: { flex: 1, paddingVertical: 10, alignItems: 'center' },
   segmentText: { fontFamily: FONT, fontSize: 13 },
   atmoHint: { fontFamily: FONT, fontSize: 10, lineHeight: 16, marginBottom: 4 },
+  libraryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 56,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  libraryBtnText: { fontFamily: FONT, fontSize: 12, letterSpacing: 1.5 },
+  libraryLinked: { fontFamily: FONT, fontSize: 10, lineHeight: 15 },
 });

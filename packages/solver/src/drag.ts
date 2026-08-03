@@ -163,19 +163,24 @@ export function dragCoefficientAtMach(model: DragModel, mach: number): number {
  *   BC = m / (d² × 7000 × i)   [lb/in²]
  * where m is in grains, d in inches, i is the form factor.
  *
- * The drag equation uses cross-sectional area = π/4 × d², not d² directly.
- * So the effective SI BC that appears in a = ρv²Cd/(2×BC_eff) must absorb
- * both the unit conversion AND the π/4 geometric factor:
+ * Derivation. Drag deceleration from first principles:
+ *   a = ½ρv²Cd·A / m,  with A = πd²/4
+ *     = ρv²·Cd·π / (8 × m/d²)
+ *     = ρv²·Cd·π / (8 × BC_SI)          [BC_SI = BC_US × 703.07 kg/m²]
  *
- *   BC_eff = BC_US × 703.07 × (π/4)
- *          = BC_US × 552.18   [kg/m²]
+ * Our integrator uses the form a = ρv²Cd / (2 × BC_eff). Equating:
+ *   1/(2·BC_eff) = π/(8·BC_SI)
+ *   BC_eff = BC_SI × 4/π
+ *          = BC_US × 703.07 × 4/π ≈ BC_US × 895.2   [kg/m²]
  *
- * Without the π/4 factor, drag is underestimated by ~21.5%, causing
- * the trajectory to be far too flat at long range.
+ * i.e. the π/4 area factor sits in the drag numerator, so it INFLATES the
+ * effective BC in our denominator form. Using bare 703.07 would overstate
+ * drag by ~27% and make the trajectory far too steep at long range.
  *
- * Derivation cross-checked against py-ballisticcalc (JBM-derived solver):
- *   their constant 0.000208551 = ρ₀ × π / (8 × 144), which embeds the
- *   same π/4 factor in the numerator rather than the BC denominator.
+ * Cross-checked against py-ballisticcalc (JBM-derived solver): their
+ * constant 0.000208551 = ρ₀ × π / (8 × 144) carries the same π/8 grouping
+ * in the numerator; both forms produce identical trajectories (see the
+ * ground-truth fixtures in __fixtures__/).
  *
  * Reference: McCoy, "Modern Exterior Ballistics" (1999), §5.2.
  */
