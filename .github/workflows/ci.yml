@@ -20,13 +20,19 @@ jobs:
       - name: Install
         run: npm ci
 
-      # Build before anything that imports @aim/solver — the package's types
+      # Build before anything that imports workspace packages — their types
       # resolve to dist/, so a fresh checkout fails app typecheck without this.
       - name: Solver build
         run: npm run build -w @aim/solver
 
+      - name: Bullet library build
+        run: npm run build -w @aim/bullet-library
+
       - name: Solver tests
         run: npm run test:solver
+
+      - name: Bullet library tests
+        run: npm run test -w @aim/bullet-library
 
       - name: App typecheck
         run: npx tsc --noEmit
