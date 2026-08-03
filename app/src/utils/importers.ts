@@ -203,6 +203,170 @@ export function importHornadyJSON(jsonText: string): ImportedProfile {
   };
 }
 
+// ─── Flexible key helpers (AB / Shooter) ──────────────────────────────────────
+
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v !== null && typeof v === 'object' && !Array.isArray(v)
+    ? (v as Record<string, unknown>)
+    : null;
+}
+
+function pickString(obj: Record<string, unknown>, keys: string[]): string | null {
+  const lower = new Map(
+    Object.keys(obj).map((k) => [k.toLowerCase().replace(/[^a-z0-9]/g, ''), k]),
+  );
+  for (const key of keys) {
+    const norm = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const orig = lower.get(norm);
+    if (orig == null) continue;
+    const v = obj[orig];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+  }
+  return null;
+}
+
+function pickNumber(obj: Record<string, unknown>, keys: string[]): number | null {
+  const lower = new Map(
+    Object.keys(obj).map((k) => [k.toLowerCase().replace(/[^a-z0-9]/g, ''), k]),
+  );
+  for (const key of keys) {
+    const norm = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const orig = lower.get(norm);
+    if (orig == null) continue;
+    const v = obj[orig];
+    const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function normalizeDiameterInches(d: number): number {
+  // Values like 6.5 or 7.62 are almost certainly mm.
+  return d > 1 ? d / 25.4 : d;
+}
+
+function dragFromRaw(raw: string | null, hasG7: boolean, hasG1: boolean): 'G1' | 'G7' {
+  if (raw) {
+    const u = raw.toUpperCase();
+    if (u.includes('G7')) return 'G7';
+    if (u.includes('G1')) return 'G1';
+  }
+  if (hasG7) return 'G7';
+  if (hasG1) return 'G1';
+  return 'G1';
+}
+
+function profileFromLooseObject(raw: Record<string, unknown>): ImportedProfile | null {
+  const bullet = asRecord(raw['bullet']) ?? asRecord(raw['Bullet']) ?? {};
+  // Nested bullet fields win over top-level collisions; drop the nested object keys.
+  const { bullet: _b, Bullet: _B, ...rest } = raw;
+  void _b;
+  void _B;
+  const merged: Record<string, unknown> = { ...rest, ...bullet };
+
+  const weightGrains = pickNumber(merged, [
+    'bulletWeight', 'weight', 'weightGrains', 'BulletWeight', 'Weight',
+  ]);
+  const diameterRaw = pickNumber(merged, [
+    'bulletDiameter', 'diameter', 'caliberInches', 'BulletDiameter', 'Diameter', 'CaliberInches',
+  ]);
+  const g7 = pickNumber(merged, ['g7Bc', 'G7BC', 'bcG7']);
+  const g1 = pickNumber(merged, ['g1Bc', 'G1BC', 'bcG1']);
+  const bcGeneric = pickNumber(merged, ['bc', 'BC', 'ballisticCoefficient', 'BallisticCoefficient']);
+  const mv = pickNumber(merged, [
+    'muzzleVelocity', 'mv', 'muzzleVelocityFps', 'MuzzleVelocity', 'MV',
+  ]);
+
+  if (weightGrains == null || diameterRaw == null || mv == null) return null;
+
+  const dragRaw = pickString(merged, [
+    'dragFunction', 'dragModel', 'bcType', 'BCType', 'DragModel',
+  ]);
+  const dragModel = dragFromRaw(dragRaw, g7 != null && g7 > 0, g1 != null && g1 > 0);
+  const bc =
+    dragModel === 'G7'
+      ? (g7 ?? bcGeneric)
+      : (g1 ?? bcGeneric);
+  if (bc == null || bc <= 0) return null;
+
+  // Prefer explicit rifle keys — bare `name` is often the bullet after nested merge.
+  const name =
+    pickString(merged, [
+      'rifleName', 'gunName', 'profileName', 'ProfileName', 'Name',
+    ]) ??
+    pickString(rest, ['name', 'Name']) ??
+    'Imported profile';
+  const caliber =
+    pickString(merged, ['cartridge', 'caliber', 'ammo', 'Cartridge', 'Caliber']) ?? 'Unknown';
+  const bulletName =
+    pickString(merged, [
+      'bulletName', 'projectile', 'BulletName', 'Bullet', 'name',
+    ]) ?? 'Unknown bullet';
+
+  return {
+    name,
+    caliber,
+    bulletName,
+    weightGrains,
+    diameterInches: normalizeDiameterInches(diameterRaw),
+    bc,
+    dragModel,
+    muzzleVelocityFps: mv,
+    zeroRangeYards:
+      pickNumber(merged, ['zeroRange', 'zeroDistance', 'ZeroRange', 'ZeroDistance']) ?? 100,
+    scopeHeightInches:
+      pickNumber(merged, ['sightHeight', 'scopeHeight', 'SightHeight', 'ScopeHeight']) ?? 1.5,
+    temperatureFahrenheit:
+      pickNumber(merged, ['zeroTemp', 'temperature', 'ZeroTemp']) ??
+      ICAO_FALLBACK.temperatureFahrenheit,
+    pressureInHg:
+      pickNumber(merged, ['zeroPressure', 'pressure', 'ZeroPressure']) ??
+      ICAO_FALLBACK.pressureInHg,
+    relativeHumidityPct:
+      pickNumber(merged, ['zeroHumidity', 'humidity', 'ZeroHumidity']) ??
+      ICAO_FALLBACK.relativeHumidityPct,
+  };
+}
+
+/**
+ * Best-effort Applied Ballistics–style JSON.
+ * Spec: docs/specs/importers/ab-mobile.md — does NOT decode proprietary AB QR.
+ */
+export function importABMobileJSON(jsonText: string): ImportedProfile[] {
+  const parsed: unknown = JSON.parse(jsonText);
+  const items: unknown[] = Array.isArray(parsed)
+    ? parsed
+    : asRecord(parsed)?.['profiles'] != null && Array.isArray(asRecord(parsed)!['profiles'])
+      ? (asRecord(parsed)!['profiles'] as unknown[])
+      : [parsed];
+
+  const out: ImportedProfile[] = [];
+  for (const item of items) {
+    const rec = asRecord(item);
+    if (!rec) continue;
+    const p = profileFromLooseObject(rec);
+    if (p) out.push(p);
+  }
+  return out;
+}
+
+/**
+ * Best-effort Shooter-app JSON (single profile or array).
+ * Spec: docs/specs/importers/shooter.md
+ */
+export function importShooterJSON(jsonText: string): ImportedProfile[] {
+  return importABMobileJSON(jsonText);
+}
+
+/**
+ * Shooter-style CSV with flexible headers (same normaliser as Strelok).
+ */
+export function importShooterCSV(csvText: string): ImportedProfile[] {
+  // Reuse Strelok column aliases — Shooter CSV headers usually normalize the same way.
+  return importStrelokCSV(csvText);
+}
+
 // ─── DB insertion helper ──────────────────────────────────────────────────────
 
 /**

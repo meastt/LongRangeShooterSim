@@ -41,7 +41,7 @@ const PRO_FEATURES = [
   { icon: 'analytics-outline',    label: 'Wind-risk envelope (winds aloft)' },
   { icon: 'document-text-outline', label: 'DOPE card PDF export' },
   { icon: 'download-outline',     label: 'Offline map areas' },
-  { icon: 'swap-horizontal-outline', label: 'Strelok / Hornady importers' },
+  { icon: 'swap-horizontal-outline', label: 'Strelok / Hornady / AB / Shooter importers' },
   { icon: 'qr-code-outline',      label: 'QR profile share' },
 ] as const;
 
@@ -345,7 +345,8 @@ const styles = StyleSheet.create({
 
   // CTA
   cta: {
-    height: 54,
+    minHeight: 56,
+    height: 56,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

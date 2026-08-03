@@ -37,6 +37,9 @@ jobs:
       - name: BLE parser tests
         run: npm run test:ble
 
+      - name: App lib tests (importers, QR, profile mapping)
+        run: npm run test:app-lib
+
       - name: App typecheck
         run: npx tsc --noEmit
         working-directory: app

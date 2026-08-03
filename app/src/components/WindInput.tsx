@@ -30,9 +30,10 @@ interface Props {
 
 const SPEED_PRESETS = [0, 5, 10, 15, 20, 25, 30];
 
-const CLOCK_DIAMETER = 220;
-const BTN_SIZE = 36;
-const RADIUS = 80;
+// Clock buttons are ≥56dp for gloves; dial grows so labels don't collide.
+const CLOCK_DIAMETER = 300;
+const BTN_SIZE = 56;
+const RADIUS = 110;
 const CENTER = CLOCK_DIAMETER / 2;
 
 /** Direction labels shown around the clock face for hunter reference. */
@@ -123,11 +124,19 @@ export function WindInput({ theme }: Props) {
           <View style={[styles.sheet, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
             {/* Header */}
             <View style={styles.sheetHeader}>
-              <Pressable onPress={() => setVisible(false)} hitSlop={12}>
+              <Pressable
+                onPress={() => setVisible(false)}
+                style={{ minHeight: 56, minWidth: 56, alignItems: 'center', justifyContent: 'center' }}
+                accessibilityLabel="Close wind input"
+              >
                 <Ionicons name="close" size={22} color={theme.label} />
               </Pressable>
               <Text style={[styles.sheetTitle, { color: theme.primary }]}>WIND INPUT</Text>
-              <Pressable onPress={apply} hitSlop={12} accessibilityLabel="Apply wind settings">
+              <Pressable
+                onPress={apply}
+                style={{ minHeight: 56, minWidth: 72, alignItems: 'center', justifyContent: 'center' }}
+                accessibilityLabel="Apply wind settings"
+              >
                 <Text style={[styles.applyBtn, { color: theme.primary }]}>APPLY</Text>
               </Pressable>
             </View>
@@ -270,12 +279,15 @@ const FONT = 'SpaceMono-Regular';
 const styles = StyleSheet.create({
   // Chip (compact field display)
   chip: {
+    flex: 1,
+    minHeight: 56,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
     minWidth: 100,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 2,
   },
   chipContent: {
@@ -344,11 +356,15 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   presetBtn: {
+    minHeight: 56,
+    minWidth: 56,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: 6,
     borderWidth: 1,
     marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   presetText: {
     fontFamily: FONT,

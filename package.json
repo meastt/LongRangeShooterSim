@@ -7,9 +7,10 @@
     "landing"
   ],
   "scripts": {
-    "test": "npm run test:solver && npm run test:ble",
+    "test": "npm run test:solver && npm run test:ble && npm run test:app-lib",
     "test:solver": "npm run test -w @aim/solver",
     "test:ble": "vitest run app/src/ble/__tests__",
+    "test:app-lib": "vitest run app/src/utils/importers.test.ts app/src/lib/profileQr.test.ts app/src/lib/profileToSolverInput.test.ts",
     "app:start": "npm run start -w app",
     "landing:dev": "npm run dev -w landing",
     "landing:build": "npm run build -w landing"

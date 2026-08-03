@@ -76,7 +76,8 @@ function Metric({ label, value, unit, theme, large, onPressUnit, valueColor }: M
         {onPressUnit ? (
           <Pressable
             onPress={onPressUnit}
-            hitSlop={10}
+            hitSlop={20}
+            style={{ minHeight: 56, minWidth: 56, alignItems: 'center', justifyContent: 'center' }}
             accessibilityLabel="Tap to toggle between MIL and MOA"
           >
             <Text style={[styles.metricUnitTappable, { color: theme.dim }]}>
@@ -335,8 +336,10 @@ const styles = StyleSheet.create({
   badge: {
     borderWidth: 1,
     borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    minHeight: 56,
+    justifyContent: 'center',
     fontFamily: FONT,
     fontSize: 9,
     letterSpacing: 1,
@@ -351,9 +354,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 56,
+    minWidth: 120,
     justifyContent: 'center',
   },
   logShotText: {

@@ -37,47 +37,10 @@ import * as Crypto from 'expo-crypto';
 import { Ionicons } from '@expo/vector-icons';
 import { upsertRifle, upsertLoad, upsertScope, upsertZero } from '../db/queries';
 import type { FieldProfile } from '../db/queries';
+import { buildQRPayload, parseQRPayload } from '../lib/profileQr';
 import type { Theme } from '../theme';
 
 const FONT = 'SpaceMono-Regular';
-const PAYLOAD_VERSION = 1;
-
-// ─── Payload helpers ──────────────────────────────────────────────────────────
-
-async function buildQRPayload(profile: FieldProfile): Promise<string> {
-  const data = JSON.stringify(profile);
-  const sig = await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    data,
-  );
-  const envelope = { v: PAYLOAD_VERSION, sig, data };
-  return btoa(unescape(encodeURIComponent(JSON.stringify(envelope))));
-}
-
-type ParseResult =
-  | { ok: true; profile: FieldProfile }
-  | { ok: false; error: string };
-
-async function parseQRPayload(raw: string): Promise<ParseResult> {
-  try {
-    const json = decodeURIComponent(escape(atob(raw)));
-    const envelope = JSON.parse(json) as { v: number; sig: string; data: string };
-    if (envelope.v !== PAYLOAD_VERSION) {
-      return { ok: false, error: `Unsupported payload version: ${envelope.v}` };
-    }
-    const expectedSig = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      envelope.data,
-    );
-    if (expectedSig !== envelope.sig) {
-      return { ok: false, error: 'Signature mismatch — payload may be corrupted.' };
-    }
-    const profile = JSON.parse(envelope.data) as FieldProfile;
-    return { ok: true, profile };
-  } catch (e) {
-    return { ok: false, error: `Parse error: ${String(e)}` };
-  }
-}
 
 async function importProfile(profile: FieldProfile): Promise<void> {
   // Generate fresh IDs so the import never conflicts with existing records.

@@ -142,10 +142,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   presetBtn: {
+    minHeight: 56,
+    minWidth: 56,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderRadius: 6,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   presetText: {
     fontFamily: FONT,

@@ -305,12 +305,15 @@ const FONT = 'SpaceMono-Regular';
 const styles = StyleSheet.create({
   // Chip
   chip: {
+    flex: 1,
+    minHeight: 56,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
     minWidth: 100,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 2,
   },
   chipContent: {
@@ -363,7 +366,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderRadius: 8,
-    paddingVertical: 10,
+    minHeight: 56,
+    paddingVertical: 14,
   },
   weatherBtnText: { fontFamily: FONT, fontSize: 11, letterSpacing: 1 },
   weatherAge: { fontFamily: FONT, fontSize: 9, textAlign: 'center', letterSpacing: 0.5 },

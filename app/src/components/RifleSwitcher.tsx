@@ -98,16 +98,16 @@ export function RifleSwitcher({ theme }: Props) {
       style={[styles.container, { borderBottomColor: theme.border }]}
       {...panResponder.panHandlers}
     >
-      {/* Prev arrow */}
+      {/* Prev arrow — ≥56×56 glove target */}
       <Pressable
         onPress={goPrev}
         disabled={!canCycle}
-        hitSlop={12}
+        style={styles.arrowBtn}
         accessibilityLabel="Previous rifle"
       >
         <Ionicons
           name="chevron-back"
-          size={18}
+          size={22}
           color={canCycle ? theme.label : theme.border}
         />
       </Pressable>
@@ -126,16 +126,16 @@ export function RifleSwitcher({ theme }: Props) {
         </Text>
       </View>
 
-      {/* Next arrow */}
+      {/* Next arrow — ≥56×56 glove target */}
       <Pressable
         onPress={goNext}
         disabled={!canCycle}
-        hitSlop={12}
+        style={styles.arrowBtn}
         accessibilityLabel="Next rifle"
       >
         <Ionicons
           name="chevron-forward"
-          size={18}
+          size={22}
           color={canCycle ? theme.label : theme.border}
         />
       </Pressable>
@@ -147,10 +147,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    minHeight: 56,
     borderBottomWidth: 1,
-    gap: 8,
+    gap: 4,
+  },
+  arrowBtn: {
+    minWidth: 56,
+    minHeight: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   center: {
     flex: 1,

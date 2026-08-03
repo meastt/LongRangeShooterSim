@@ -11,7 +11,8 @@
  *   Flip to "true" when submitting to the App Store.
  *
  * Entitlement identifier in RevenueCat dashboard: "pro"
- * Product identifiers: aim_hunter_annual, aim_founders_lifetime
+ * Product identifiers (RC catalog): yearly, founders — must match PRODUCT_IDS.
+ * Launch checklist: docs/alpha-positioning.md + app/src/billing/README.md
  */
 import { useState, useEffect, useCallback } from 'react';
 
@@ -72,7 +73,8 @@ export function useEntitlement(): EntitlementState {
       setIsPro(await isProFromRC());
     } catch (e) {
       setError(String(e));
-      setIsPro(true); // fail open during beta
+      // Fail closed when paywall is armed; beta mode never reaches here.
+      setIsPro(false);
     } finally {
       setLoading(false);
     }

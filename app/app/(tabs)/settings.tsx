@@ -38,6 +38,9 @@ import { useProGate } from '../../src/components/PaywallScreen';
 import {
   importStrelokCSV,
   importHornadyJSON,
+  importABMobileJSON,
+  importShooterJSON,
+  importShooterCSV,
   insertImportedProfiles,
 } from '../../src/utils/importers';
 import * as DocumentPicker from 'expo-document-picker';
@@ -219,6 +222,81 @@ export default function SettingsScreen() {
       );
     } catch (e) {
       Alert.alert('Hornady import failed', String(e));
+    } finally {
+      setImportWorking(false);
+    }
+  }
+
+  async function handleABImport() {
+    if (!isPro) { showPaywall('Importers'); return; }
+    setImportWorking(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['application/json', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      const text = await readPickedText(picked.assets[0].uri);
+      const profiles = importABMobileJSON(text);
+      if (profiles.length === 0) {
+        Alert.alert(
+          'No profiles found',
+          'Could not parse AB-style JSON. AB Quantum QR is proprietary — export or paste a JSON object with MV, BC, weight, and diameter (see docs/specs/importers/ab-mobile.md).',
+        );
+        return;
+      }
+      const count = await insertImportedProfiles(profiles, {
+        upsertRifleFn: upsertRifle,
+        upsertLoadFn: upsertLoad,
+        upsertScopeFn: upsertScope,
+        upsertZeroFn: upsertZero,
+        randomUUID: () => Crypto.randomUUID(),
+        now: () => new Date().toISOString(),
+      });
+      Alert.alert(
+        'AB-style import complete',
+        `Imported ${count} of ${profiles.length} profile(s). Review twist, barrel, and BC before field use.`,
+      );
+    } catch (e) {
+      Alert.alert('AB import failed', String(e));
+    } finally {
+      setImportWorking(false);
+    }
+  }
+
+  async function handleShooterImport() {
+    if (!isPro) { showPaywall('Importers'); return; }
+    setImportWorking(true);
+    try {
+      const picked = await DocumentPicker.getDocumentAsync({
+        type: ['application/json', 'text/csv', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (picked.canceled || !picked.assets?.[0]) return;
+      const text = await readPickedText(picked.assets[0].uri);
+      const name = picked.assets[0].name?.toLowerCase() ?? '';
+      const profiles =
+        name.endsWith('.csv') || text.trimStart().toLowerCase().startsWith('name,')
+          ? importShooterCSV(text)
+          : importShooterJSON(text);
+      if (profiles.length === 0) {
+        Alert.alert('No profiles found', 'Could not parse Shooter JSON/CSV export.');
+        return;
+      }
+      const count = await insertImportedProfiles(profiles, {
+        upsertRifleFn: upsertRifle,
+        upsertLoadFn: upsertLoad,
+        upsertScopeFn: upsertScope,
+        upsertZeroFn: upsertZero,
+        randomUUID: () => Crypto.randomUUID(),
+        now: () => new Date().toISOString(),
+      });
+      Alert.alert(
+        'Shooter import complete',
+        `Imported ${count} of ${profiles.length} profile(s). Review twist rate and barrel length.`,
+      );
+    } catch (e) {
+      Alert.alert('Shooter import failed', String(e));
     } finally {
       setImportWorking(false);
     }
@@ -463,6 +541,34 @@ export default function SettingsScreen() {
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[styles.settingLabel, { color: theme.label }]}>Hornady 4DOF · JSON</Text>
               <Text style={[styles.checkDetail, { color: theme.dim }]}>Pick a Hornady CustomShop export</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.dim} />
+          </Pressable>
+          <Pressable
+            onPress={handleABImport}
+            disabled={importWorking || backupWorking}
+            style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: theme.border }]}
+            accessibilityLabel="Import Applied Ballistics style JSON profile"
+          >
+            <Ionicons name="document-text-outline" size={18} color={theme.label} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[styles.settingLabel, { color: theme.label }]}>AB-style · JSON</Text>
+              <Text style={[styles.checkDetail, { color: theme.dim }]}>
+                Flexible JSON (not AB Quantum QR)
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={theme.dim} />
+          </Pressable>
+          <Pressable
+            onPress={handleShooterImport}
+            disabled={importWorking || backupWorking}
+            style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: theme.border }]}
+            accessibilityLabel="Import Shooter app JSON or CSV profile"
+          >
+            <Ionicons name="document-text-outline" size={18} color={theme.label} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[styles.settingLabel, { color: theme.label }]}>Shooter · JSON / CSV</Text>
+              <Text style={[styles.checkDetail, { color: theme.dim }]}>Community Shooter export formats</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={theme.dim} />
           </Pressable>
